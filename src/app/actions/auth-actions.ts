@@ -20,10 +20,14 @@ type AuthResult = {
 export async function authenticate(credentials: AuthInput): Promise<AuthResult> {
     await dbConnect();
     try {
-        const user = await UserModel.findOne({ email: credentials.email, role: credentials.role }).lean();
+        const user = await UserModel.findOne({ email: credentials.email }).lean();
 
         if (!user) {
-            return { success: false, message: 'المستخدم غير موجود أو الدور غير صحيح.' };
+            return { success: false, message: 'المستخدم غير موجود.' };
+        }
+
+        if (user.role !== credentials.role) {
+             return { success: false, message: 'الدور المحدد غير صحيح لهذا المستخدم.' };
         }
 
         // In a real app, you would use bcrypt.compare to check the password
