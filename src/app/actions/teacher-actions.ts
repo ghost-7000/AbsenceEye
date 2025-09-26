@@ -145,9 +145,13 @@ export async function getDetailedAttendanceForTeacher(teacherId: string): Promis
     await dbConnect();
 
     const teacherClasses: Class[] = await ClassModel.find({ teacherId }).lean();
+    if (teacherClasses.length === 0) return [];
+
     const classIds = teacherClasses.map(c => c._id.toString());
 
     const records: AttendanceRecord[] = await AttendanceRecordModel.find({ classId: { $in: classIds } }).sort({ date: -1 }).lean();
+    if (records.length === 0) return [];
+    
     const studentIds = records.map(r => r.studentId);
     
     const students = await StudentModel.find({ _id: { $in: studentIds } }).lean();
