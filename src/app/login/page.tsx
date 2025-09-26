@@ -10,7 +10,7 @@ export default function LoginPage() {
             <GraduationCap className="h-8 w-8" />
           </div>
           <h1 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            AbsenceEye – متابعة الحضور والغياب
+            AbsenceEye
           </h1>
           <p className="mt-2 text-muted-foreground">أهلاً بك! الرجاء تسجيل الدخول للمتابعة.</p>
         </div>
