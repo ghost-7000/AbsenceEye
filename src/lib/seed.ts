@@ -23,7 +23,7 @@ async function ensureAdminAndTeacherExist() {
         email: 'teacher@example.com',
         password: 'password123', // In a real app, this should be hashed
         role: 'teacher',
-        avatarUrl: 'https://picsum.photos/seed/teacher/200/200',
+        avatarUrl: 'https://picsum.photos/seed/teacher1/200/200',
       });
        console.log('Teacher user created.');
     }
@@ -51,21 +51,33 @@ export async function seedDatabase() {
         return;
     }
 
-    console.log('Creating initial class...');
+    console.log('Creating initial classes...');
     const classA = await ClassModel.create({
         name: 'الصف الأول - أ',
         teacherId: teacher._id.toString(),
         note: 'ملاحظات أولية حول الصف الأول - أ.'
     });
-    console.log('Class created.');
+    const classB = await ClassModel.create({
+        name: 'الصف الأول - ب',
+        teacherId: teacher._id.toString(),
+        note: 'ملاحظات أولية حول الصف الأول - ب.'
+    });
+    console.log('Classes created.');
 
     console.log('Creating initial students...');
     const studentsData = [
+        // Class A
         { name: 'فاطمة علي', classId: classA._id.toString(), avatarUrl: 'https://picsum.photos/seed/s1/200' },
         { name: 'عائشة محمد', classId: classA._id.toString(), avatarUrl: 'https://picsum.photos/seed/s2/200' },
         { name: 'زينب عبدالله', classId: classA._id.toString(), avatarUrl: 'https://picsum.photos/seed/s3/200' },
         { name: 'مريم أحمد', classId: classA._id.toString(), avatarUrl: 'https://picsum.photos/seed/s4/200' },
         { name: 'سارة حسن', classId: classA._id.toString(), avatarUrl: 'https://picsum.photos/seed/s5/200' },
+        // Class B
+        { name: 'هند خالد', classId: classB._id.toString(), avatarUrl: 'https://picsum.photos/seed/s6/200' },
+        { name: 'نورة فهد', classId: classB._id.toString(), avatarUrl: 'https://picsum.photos/seed/s7/200' },
+        { name: 'لولوة سعد', classId: classB._id.toString(), avatarUrl: 'https://picsum.photos/seed/s8/200' },
+        { name: 'جمانة ياسر', classId: classB._id.toString(), avatarUrl: 'https://picsum.photos/seed/s9/200' },
+        { name: 'حصة إبراهيم', classId: classB._id.toString(), avatarUrl: 'https://picsum.photos/seed/s10/200' },
     ];
     const createdStudents = await StudentModel.insertMany(studentsData);
     console.log(`${createdStudents.length} students created.`);
@@ -80,7 +92,7 @@ export async function seedDatabase() {
             const status = Math.random() > 0.15 ? 'present' : 'absent';
             attendanceRecords.push({
                 studentId: student._id.toString(),
-                classId: classA._id.toString(),
+                classId: student.classId.toString(),
                 date: date,
                 status: status
             });
