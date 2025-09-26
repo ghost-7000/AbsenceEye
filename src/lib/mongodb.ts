@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
+import { seedDatabase } from './seed';
 
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_URI = "mongodb+srv://kdmdfd86_db_user:l5x6ivaIf24tdNQl@cluster0.qhl9tub.mongodb.net/AbsenceEyeDB?retryWrites=true&w=majority&appName=Cluster0";
 
 if (!MONGODB_URI) {
   throw new Error(
@@ -24,7 +25,8 @@ async function dbConnect() {
       bufferCommands: false,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
+    cached.promise = mongoose.connect(MONGODB_URI!, opts).then(async (mongoose) => {
+      await seedDatabase();
       return mongoose;
     });
   }
