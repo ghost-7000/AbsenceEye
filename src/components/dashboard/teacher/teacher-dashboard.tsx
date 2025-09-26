@@ -47,7 +47,7 @@ export default function TeacherDashboard() {
   }, []);
 
   const formattedDate = format(currentDateTime, 'eeee, d MMMM yyyy', { locale: ar });
-  const formattedTime = format(currentDateTime, 'hh:mm:ss a', { locale: ar });
+  const formattedTime = format(currentDateTime, 'hh:mm:ss a');
 
   return (
     <div className="grid gap-6">

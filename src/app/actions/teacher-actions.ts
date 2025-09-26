@@ -2,9 +2,10 @@
 
 import dbConnect from "@/lib/mongodb";
 import { ClassModel, StudentModel, AttendanceRecordModel, UserModel } from "@/lib/models";
-import type { Class, Student, User } from "@/lib/types";
+import type { Class, Student, User, AttendanceRecord } from "@/lib/types";
 import { revalidatePath } from "next/cache";
 import { format } from "date-fns";
+import type { DetailedAttendanceRecord } from "./admin-actions";
 
 // This is a helper type for the client component
 export type ClassWithStudents = Class & { students: Student[] };
@@ -90,6 +91,7 @@ export async function saveAttendance(records: AttendanceData[]) {
     }
     revalidatePath('/teacher/attendance');
     revalidatePath('/teacher/dashboard');
+    revalidatePath('/teacher/records');
 }
 
 export async function getAttendanceForDate(teacherId: string, date: string) {
@@ -125,8 +127,40 @@ export async function getTeacherStats(teacherId: string) {
             date: today,
             status: 'present'
         });
-        attendancePercentage = Math.round((presentCount / studentCount) * 100);
+        // Avoid division by zero if there are students but no attendance taken yet
+        const totalTaken = await AttendanceRecordModel.countDocuments({
+             classId: { $in: classIds },
+             date: today,
+        });
+
+        if (totalTaken > 0) {
+            attendancePercentage = Math.round((presentCount / totalTaken) * 100);
+        }
     }
 
     return { classCount, studentCount, attendancePercentage };
+}
+
+export async function getDetailedAttendanceForTeacher(teacherId: string): Promise<DetailedAttendanceRecord[]> {
+    await dbConnect();
+
+    const teacherClasses = await ClassModel.find({ teacherId }).lean();
+    const classIds = teacherClasses.map(c => c._id.toString());
+
+    const records = await AttendanceRecordModel.find({ classId: { $in: classIds } }).sort({ date: -1 }).lean();
+    const studentIds = records.map(r => r.studentId);
+    
+    const students = await StudentModel.find({ _id: { $in: studentIds } }).lean();
+    
+    const studentMap = new Map(students.map(s => [s._id.toString(), s.name]));
+    const classMap = new Map(teacherClasses.map(c => [c._id.toString(), c.name]));
+
+    const detailedRecords = records.map(record => ({
+        ...record,
+        id: record._id.toString(),
+        studentName: studentMap.get(record.studentId.toString()) || 'طالب محذوف',
+        className: classMap.get(record.classId.toString()) || 'صف محذوف',
+    }));
+
+    return JSON.parse(JSON.stringify(detailedRecords));
 }

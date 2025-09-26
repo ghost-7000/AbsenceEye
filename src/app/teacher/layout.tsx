@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/sidebar';
 import { MainHeader } from '@/components/shared/main-header';
 import Link from 'next/link';
-import { LayoutDashboard, Users, BookOpen, Settings, GraduationCap } from 'lucide-react';
+import { LayoutDashboard, Users, BookOpen, Settings, GraduationCap, ClipboardList } from 'lucide-react';
 
 export default function TeacherDashboardLayout({
   children,
@@ -50,6 +50,14 @@ export default function TeacherDashboardLayout({
                       <Link href="/teacher/attendance">
                         <Users />
                         <span>تسجيل الحضور</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip="سجلاتي" href="/teacher/records">
+                      <Link href="/teacher/records">
+                        <ClipboardList />
+                        <span>سجلاتي</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
