@@ -99,19 +99,19 @@ export function LoginForm() {
                       defaultValue={field.value}
                       className="flex gap-4"
                     >
-                      <FormItem className="flex items-center space-x-2 space-x-reverse">
+                      <FormItem className="flex items-center gap-2">
                         <FormControl>
                           <RadioGroupItem value="teacher" id="teacher" />
                         </FormControl>
-                        <FormLabel htmlFor="teacher" className="font-normal">
+                        <FormLabel htmlFor="teacher" className="font-normal cursor-pointer">
                           معلمة
                         </FormLabel>
                       </FormItem>
-                      <FormItem className="flex items-center space-x-2 space-x-reverse">
+                      <FormItem className="flex items-center gap-2">
                         <FormControl>
                           <RadioGroupItem value="admin" id="admin" />
                         </FormControl>
-                        <FormLabel htmlFor="admin" className="font-normal">
+                        <FormLabel htmlFor="admin" className="font-normal cursor-pointer">
                           مديرة
                         </FormLabel>
                       </FormItem>
