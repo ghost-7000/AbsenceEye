@@ -17,45 +17,47 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-
-import { students, attendanceRecords, classes } from '@/lib/data';
-import type { Student } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
+import { getMostAbsentStudents } from '@/app/actions/admin-actions';
+import type { Student } from '@/lib/types';
+import { Loader2 } from 'lucide-react';
 
 interface AbsentStudent extends Student {
   absences: number;
+  className: string;
 }
 
 export default function MostAbsentStudents() {
   const [mostAbsent, setMostAbsent] = React.useState<AbsentStudent[]>([]);
+  const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    const absenceCounts = attendanceRecords.reduce((acc, record) => {
-      if (record.status === 'absent') {
-        acc[record.studentId] = (acc[record.studentId] || 0) + 1;
+    async function fetchMostAbsent() {
+      setLoading(true);
+      try {
+        const data = await getMostAbsentStudents();
+        setMostAbsent(data);
+      } catch (error) {
+        console.error("Failed to fetch most absent students", error);
+      } finally {
+        setLoading(false);
       }
-      return acc;
-    }, {} as Record<string, number>);
-
-    const sortedStudents: AbsentStudent[] = students
-      .map(student => ({
-        ...student,
-        absences: absenceCounts[student.id] || 0,
-      }))
-      .filter(student => student.absences > 0)
-      .sort((a, b) => b.absences - a.absences)
-      .slice(0, 5); // Get top 5
-
-    setMostAbsent(sortedStudents);
+    }
+    fetchMostAbsent();
   }, []);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>أكثر الطلاب غيابًا</CardTitle>
-        <CardDescription>قائمة بالطلاب الأكثر غيابًا خلال الأسبوع الماضي.</CardDescription>
+        <CardDescription>قائمة بالطلاب الأكثر غيابًا.</CardDescription>
       </CardHeader>
       <CardContent>
+         {loading ? (
+          <div className="flex justify-center items-center h-48">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
         <Table>
           <TableHeader>
             <TableRow>
@@ -66,26 +68,23 @@ export default function MostAbsentStudents() {
           </TableHeader>
           <TableBody>
             {mostAbsent.length > 0 ? (
-              mostAbsent.map(student => {
-                const studentClass = classes.find(c => c.id === student.classId);
-                return (
+              mostAbsent.map(student => (
                   <TableRow key={student.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-9 w-9">
-                          <AvatarImage src={undefined} alt={student.name} />
+                          <AvatarImage src={student.avatarUrl || undefined} alt={student.name} />
                           <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="font-medium">{student.name}</div>
                       </div>
                     </TableCell>
-                    <TableCell>{studentClass?.name || 'غير معروف'}</TableCell>
+                    <TableCell>{student.className}</TableCell>
                     <TableCell className="text-center">
                         <Badge variant="destructive">{student.absences}</Badge>
                     </TableCell>
                   </TableRow>
-                );
-              })
+              ))
             ) : (
               <TableRow>
                 <TableCell colSpan={3} className="h-24 text-center">
@@ -95,6 +94,7 @@ export default function MostAbsentStudents() {
             )}
           </TableBody>
         </Table>
+        )}
       </CardContent>
     </Card>
   );

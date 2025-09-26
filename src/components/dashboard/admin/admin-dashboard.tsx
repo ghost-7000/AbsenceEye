@@ -3,15 +3,19 @@ import { StatsCard } from '@/components/dashboard/stats-card';
 import { AttendanceSummary } from '@/components/dashboard/admin/attendance-summary';
 import TeacherManagement from '@/components/dashboard/admin/teacher-management';
 import MostAbsentStudents from './most-absent-students';
-import { users, classes, students } from '@/lib/data';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import dbConnect from '@/lib/mongodb';
+import { UserModel, ClassModel, StudentModel } from '@/lib/models';
 
-export default function AdminDashboard() {
-  const totalTeachers = users.filter(u => u.role === 'teacher').length;
-  const totalClasses = classes.length;
-  const totalStudents = students.length;
+async function getAdminStats() {
+    await dbConnect();
+    const totalTeachers = await UserModel.countDocuments({ role: 'teacher' });
+    const totalClasses = await ClassModel.countDocuments();
+    const totalStudents = await StudentModel.countDocuments();
+    return { totalTeachers, totalClasses, totalStudents };
+}
+
+export default async function AdminDashboard() {
+  const { totalTeachers, totalClasses, totalStudents } = await getAdminStats();
 
   return (
     <div className="grid gap-6">
