@@ -1,8 +1,7 @@
 import { UserModel, ClassModel, StudentModel, AttendanceRecordModel } from './models';
+import { format, subDays } from 'date-fns';
 
-// This function will be called once when the database connection is established.
-export async function seedDatabase() {
-  try {
+async function ensureAdminAndTeacherExist() {
     const adminExists = await UserModel.findOne({ role: 'admin' });
     if (!adminExists) {
       console.log('Admin user not found, creating one...');
@@ -14,12 +13,10 @@ export async function seedDatabase() {
         avatarUrl: 'https://picsum.photos/seed/admin/200/200',
       });
       console.log('Admin user created.');
-    } else {
-        console.log('Admin user already exists.');
     }
 
     const teacherExists = await UserModel.findOne({ email: 'teacher@example.com' });
-    if (!teacherExists) {
+     if (!teacherExists) {
       console.log('Teacher user not found, creating one...');
       await UserModel.create({
         name: 'المعلمة نورة',
@@ -29,9 +26,76 @@ export async function seedDatabase() {
         avatarUrl: 'https://picsum.photos/seed/teacher/200/200',
       });
        console.log('Teacher user created.');
-    } else {
-        console.log('Teacher user already exists.');
     }
+}
+
+
+// This function will be called once when the database connection is established.
+export async function seedDatabase() {
+  try {
+    const studentCount = await StudentModel.countDocuments();
+    if (studentCount > 0) {
+        console.log('Database appears to be seeded already.');
+        await ensureAdminAndTeacherExist(); // Still ensure default users exist
+        return;
+    }
+    
+    console.log('Database is empty, seeding with initial data...');
+
+    await ensureAdminAndTeacherExist();
+
+    const teacher = await UserModel.findOne({ email: 'teacher@example.com' });
+    if (!teacher) {
+        console.error("Default teacher not found after seeding users. Aborting student/class seeding.");
+        return;
+    }
+
+    console.log('Creating initial class...');
+    const classA = await ClassModel.create({
+        name: 'الصف الأول - أ',
+        teacherId: teacher._id.toString(),
+        note: 'ملاحظات أولية حول الصف الأول - أ.'
+    });
+    console.log('Class created.');
+
+    console.log('Creating initial students...');
+    const studentsData = [
+        { name: 'فاطمة علي', classId: classA._id.toString(), avatarUrl: 'https://picsum.photos/seed/s1/200' },
+        { name: 'عائشة محمد', classId: classA._id.toString(), avatarUrl: 'https://picsum.photos/seed/s2/200' },
+        { name: 'زينب عبدالله', classId: classA._id.toString(), avatarUrl: 'https://picsum.photos/seed/s3/200' },
+        { name: 'مريم أحمد', classId: classA._id.toString(), avatarUrl: 'https://picsum.photos/seed/s4/200' },
+        { name: 'سارة حسن', classId: classA._id.toString(), avatarUrl: 'https://picsum.photos/seed/s5/200' },
+    ];
+    const createdStudents = await StudentModel.insertMany(studentsData);
+    console.log(`${createdStudents.length} students created.`);
+    
+    console.log('Creating initial attendance records for the past 5 days...');
+    const attendanceRecords = [];
+    const today = new Date();
+    for (let i = 0; i < 5; i++) { // For the last 5 days
+        const date = format(subDays(today, i), 'yyyy-MM-dd');
+        for (const student of createdStudents) {
+            // Make absences random but not too frequent
+            const status = Math.random() > 0.15 ? 'present' : 'absent';
+            attendanceRecords.push({
+                studentId: student._id.toString(),
+                classId: classA._id.toString(),
+                date: date,
+                status: status
+            });
+        }
+    }
+    
+    // Use bulk insert with ordered: false to avoid stopping on duplicate key errors if re-run
+    await AttendanceRecordModel.insertMany(attendanceRecords, { ordered: false }).catch(err => {
+        // Ignore duplicate key errors, which can happen if seeding is interrupted and re-run
+        if (err.code !== 11000) {
+            console.error('Error inserting attendance records:', err);
+        }
+    });
+
+    console.log('Attendance records created.');
+    console.log('Database seeding complete.');
 
   } catch (error) {
     console.error('Error seeding database:', error);
