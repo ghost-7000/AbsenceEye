@@ -28,7 +28,6 @@ import { getDetailedAttendanceForTeacher } from '@/app/actions/teacher-actions';
 import type { DetailedAttendanceRecord } from '@/app/actions/admin-actions';
 import { Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { ar } from 'date-fns/locale';
 
 
 interface GroupedRecords {
@@ -67,54 +66,46 @@ export default function TeacherRecordsTable() {
   }, []);
 
   const groupedAndFilteredRecords: GroupedRecords = React.useMemo(() => {
+    const recordsForDate = allRecords.filter(record => {
+        // Ensure we compare only the date part of the string
+        return record.date.substring(0, 10) === filterDate;
+    });
+
     const grouped: GroupedRecords = {};
 
-    allRecords
-      .filter(record => {
-        const recordDate = record.date.substring(0, 10);
-        return recordDate === filterDate;
-      })
-      .forEach(record => {
-        const studentName = record.studentName;
+    recordsForDate.forEach(record => {
         const className = record.className;
-        
-        const matchesSearch = searchTerm === '' || 
-                              studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                              className.toLowerCase().includes(searchTerm.toLowerCase());
-        
-        if (matchesSearch) {
-          if (!grouped[className]) {
+        if (!grouped[className]) {
             grouped[className] = { 
                 records: [], 
                 time: record.timestamp ? format(new Date(record.timestamp), 'hh:mm a') : null
             };
-          }
-          grouped[className].records.push(record);
         }
-      });
+        grouped[className].records.push(record);
+    });
     
-      if (searchTerm) {
-          const lowercasedSearch = searchTerm.toLowerCase();
-          const finalGroup: GroupedRecords = {};
-          Object.keys(grouped).forEach(className => {
-              if (className.toLowerCase().includes(lowercasedSearch)) {
-                  finalGroup[className] = grouped[className];
-              } else { 
-                  const filteredStudents = grouped[className].records.filter(
-                      record => record.studentName.toLowerCase().includes(lowercasedSearch)
-                  );
-                  if (filteredStudents.length > 0) {
-                      finalGroup[className] = {
-                          ...grouped[className],
-                          records: filteredStudents
-                      };
-                  }
-              }
-          });
-          return finalGroup;
-      }
-
-    return grouped;
+    if (!searchTerm) {
+        return grouped;
+    }
+    
+    const lowercasedSearch = searchTerm.toLowerCase();
+    const finalGroup: GroupedRecords = {};
+    Object.keys(grouped).forEach(className => {
+        if (className.toLowerCase().includes(lowercasedSearch)) {
+            finalGroup[className] = grouped[className];
+        } else { 
+            const filteredStudents = grouped[className].records.filter(
+                record => record.studentName.toLowerCase().includes(lowercasedSearch)
+            );
+            if (filteredStudents.length > 0) {
+                finalGroup[className] = {
+                    ...grouped[className],
+                    records: filteredStudents
+                };
+            }
+        }
+    });
+    return finalGroup;
 
   }, [allRecords, filterDate, searchTerm]);
 
@@ -154,16 +145,16 @@ export default function TeacherRecordsTable() {
                 const absentCount = records.length - presentCount;
 
                 return (
-                    <AccordionItem value={className} key={className} className="border rounded-lg">
-                        <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                    <AccordionItem value={className} key={className} className="border rounded-lg bg-card">
+                        <AccordionTrigger className="px-6 py-4 hover:no-underline rounded-t-lg">
                             <div className='flex justify-between items-center w-full'>
                                 <div className='text-start'>
                                     <h3 className="font-semibold text-lg">{className}</h3>
                                     <p className="text-sm text-muted-foreground mt-1">
-                                        {time ? `وقت التسجيل: ${time}` : ''}
+                                        {time ? `وقت التسجيل: ${time}` : 'لم يتم تحديد وقت'}
                                     </p>
                                 </div>
-                                <div className="flex gap-4 text-sm pe-4">
+                                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-sm pe-4">
                                      <span><Badge variant="secondary">العدد: {records.length}</Badge></span>
                                      <span><Badge variant="outline" className="text-green-600 border-green-200">حضور: {presentCount}</Badge></span>
                                      <span><Badge variant="destructive">غياب: {absentCount}</Badge></span>
@@ -202,7 +193,7 @@ export default function TeacherRecordsTable() {
           <div className="flex flex-col items-center justify-center rounded-md border border-dashed p-12 text-center mt-6">
                 <h3 className="text-lg font-medium">لا توجد سجلات</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
-                    لا توجد سجلات حضور مطابقة لليوم أو البحث المحدد.
+                    لم يتم العثور على سجلات حضور لليوم المحدد أو لمعايير البحث.
                 </p>
             </div>
         )}

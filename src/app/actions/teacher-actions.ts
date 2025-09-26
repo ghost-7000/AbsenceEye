@@ -93,6 +93,9 @@ export async function saveAttendance(records: AttendanceData[]) {
     revalidatePath('/teacher/attendance');
     revalidatePath('/teacher/dashboard');
     revalidatePath('/teacher/records');
+    revalidatePath('/admin/attendance-records');
+    revalidatePath('/admin/dashboard');
+
 }
 
 export async function getAttendanceForDate(teacherId: string, date: string) {

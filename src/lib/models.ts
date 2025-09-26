@@ -11,26 +11,26 @@ const UserSchema = new Schema<User>({
 
 const ClassSchema = new Schema<Class>({
     name: { type: String, required: true },
-    teacherId: { type: String, required: true }, // Changed to String to match User _id type after stringification
+    teacherId: { type: String, required: true },
     note: { type: String },
 });
 
 const StudentSchema = new Schema<Student>({
     name: { type: String, required: true },
-    classId: { type: String, required: true }, // Changed to String
+    classId: { type: String, required: true },
     avatarUrl: { type: String },
 });
 
 const AttendanceRecordSchema = new Schema<AttendanceRecord>({
-    studentId: { type: String, required: true }, // Changed to String
-    classId: { type: String, required: true }, // Changed to String
+    studentId: { type: String, required: true },
+    classId: { type: String, required: true },
     date: { type: String, required: true }, // Format: YYYY-MM-DD
     status: { type: String, enum: ['present', 'absent'], required: true },
     timestamp: { type: Date, default: Date.now },
 });
 
 // Index for faster queries on attendance
-AttendanceRecordSchema.index({ studentId: 1, date: 1, classId: 1 }, { unique: true });
+AttendanceRecordSchema.index({ studentId: 1, classId: 1, date: 1 }, { unique: true });
 AttendanceRecordSchema.index({ classId: 1, date: 1 });
 AttendanceRecordSchema.index({ date: 1 });
 
