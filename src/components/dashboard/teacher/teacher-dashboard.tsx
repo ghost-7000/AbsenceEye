@@ -10,9 +10,10 @@ import { ar } from 'date-fns/locale';
 interface TeacherDashboardProps {
   classCount: number;
   studentCount: number;
+  attendancePercentage: number;
 }
 
-export default function TeacherDashboard({ classCount, studentCount }: TeacherDashboardProps) {
+export default function TeacherDashboard({ classCount, studentCount, attendancePercentage }: TeacherDashboardProps) {
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
   useEffect(() => {
@@ -54,9 +55,9 @@ export default function TeacherDashboard({ classCount, studentCount }: TeacherDa
         />
         <StatsCard
           title="نسبة الحضور اليوم"
-          value="95%"
+          value={`${attendancePercentage}%`}
           icon={UserCheck}
-          description="نسبة حضور الطلاب اليوم (مثال)"
+          description="نسبة حضور الطلاب المسجلين اليوم"
         />
       </div>
       <Card>
