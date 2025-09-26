@@ -4,7 +4,7 @@ import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PlusCircle, UserPlus, Trash2, Edit, FileText, MoreVertical } from 'lucide-react';
+import { PlusCircle, UserPlus, Trash2, Edit, FileText, MoreVertical, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -22,20 +22,24 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useClasses } from '@/context/class-context';
+
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
-import type { Class } from '@/lib/types';
+import type { ClassWithStudents } from '@/app/actions/teacher-actions';
+import { getTeacherClassesAndStudents, addClass, addStudent, deleteStudent, updateClassName, updateClassNote } from '@/app/actions/teacher-actions';
+import type { Student } from '@/lib/types';
 
 
 export default function ClassManagement() {
   const { toast } = useToast();
-  const { teacherClasses, getStudentsByClass, addClass, addStudent, deleteStudent, updateClassNote, updateClassName } = useClasses();
+  const [classes, setClasses] = React.useState<ClassWithStudents[]>([]);
+  const [loading, setLoading] = React.useState(true);
   
   const [isAddClassOpen, setAddClassOpen] = React.useState(false);
+  const [isProcessing, setIsProcessing] = React.useState(false);
 
   const [dialogState, setDialogState] = React.useState<{
     type: 'addStudent' | 'editClass' | 'editNote' | 'deleteStudent' | null;
@@ -45,25 +49,58 @@ export default function ClassManagement() {
     isOpen: boolean;
   }>({ type: null, classId: null, isOpen: false });
 
-  const handleAddClass = (event: React.FormEvent<HTMLFormElement>) => {
+  const fetchClasses = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      // In a real app, you would pass the logged-in teacher's ID
+      const teacherId = 'user-2'; 
+      const teacherClasses = await getTeacherClassesAndStudents(teacherId);
+      setClasses(teacherClasses);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'خطأ في جلب البيانات',
+        description: 'فشل تحميل بيانات الصفوف من قاعدة البيانات.',
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  React.useEffect(() => {
+    fetchClasses();
+  }, [fetchClasses]);
+
+  const handleAddClass = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setIsProcessing(true);
     const form = event.currentTarget;
     const formData = new FormData(form);
     const name = formData.get('className') as string;
+    const teacherId = 'user-2'; // Static for demo
 
     if (!name) {
       toast({ variant: 'destructive', title: 'خطأ', description: 'الرجاء إدخال اسم الصف.' });
+      setIsProcessing(false);
       return;
     }
-    addClass(name);
-    toast({ title: 'نجاح', description: `تم إنشاء صف "${name}" بنجاح.` });
-    setAddClassOpen(false);
-    form.reset();
+    try {
+      await addClass(name, teacherId);
+      toast({ title: 'نجاح', description: `تم إنشاء صف "${name}" بنجاح.` });
+      setAddClassOpen(false);
+      form.reset();
+      fetchClasses(); // Refresh data
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'فشل الإنشاء', description: 'لم يتمكن من إنشاء الصف.'});
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const handleStudentAction = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleStudentAction = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!dialogState.classId) return;
+    setIsProcessing(true);
 
     const form = event.currentTarget;
     const formData = new FormData(form);
@@ -71,58 +108,90 @@ export default function ClassManagement() {
     
     if (!name) {
         toast({ variant: 'destructive', title: 'خطأ', description: 'الرجاء إدخال اسم الطالب.' });
+        setIsProcessing(false);
         return;
     }
-
-    addStudent(name, dialogState.classId);
-    const className = teacherClasses.find(c => c.id === dialogState.classId)?.name;
-    toast({ title: 'نجاح', description: `تمت إضافة الطالب "${name}" إلى صف ${className}.` });
-    setDialogState({ type: null, classId: null, isOpen: false });
-    form.reset();
+    
+    try {
+      await addStudent(name, dialogState.classId);
+      const className = classes.find(c => c.id === dialogState.classId)?.name;
+      toast({ title: 'نجاح', description: `تمت إضافة الطالب "${name}" إلى صف ${className}.` });
+      setDialogState({ type: null, classId: null, isOpen: false });
+      form.reset();
+      fetchClasses();
+    } catch (error) {
+       toast({ variant: 'destructive', title: 'فشل الإضافة', description: 'لم يتمكن من إضافة الطالب.'});
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const handleClassAction = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleClassAction = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!dialogState.classId) return;
+    setIsProcessing(true);
 
     const form = event.currentTarget;
     const formData = new FormData(form);
 
-    if (dialogState.type === 'editClass') {
-        const name = formData.get('className') as string;
-        if (!name) {
-            toast({ variant: 'destructive', title: 'خطأ', description: 'الرجاء إدخال اسم الصف الجديد.' });
-            return;
-        }
-        updateClassName(dialogState.classId, name);
-        toast({ title: 'نجاح', description: 'تم تحديث اسم الصف.' });
-    }
+    try {
+      if (dialogState.type === 'editClass') {
+          const name = formData.get('className') as string;
+          if (!name) {
+              toast({ variant: 'destructive', title: 'خطأ', description: 'الرجاء إدخال اسم الصف الجديد.' });
+              setIsProcessing(false);
+              return;
+          }
+          await updateClassName(dialogState.classId, name);
+          toast({ title: 'نجاح', description: 'تم تحديث اسم الصف.' });
+      }
 
-    if (dialogState.type === 'editNote') {
-        const note = formData.get('classNote') as string;
-        updateClassNote(dialogState.classId, note);
-        toast({ title: 'نجاح', description: 'تم حفظ الملاحظة.' });
+      if (dialogState.type === 'editNote') {
+          const note = formData.get('classNote') as string;
+          await updateClassNote(dialogState.classId, note);
+          toast({ title: 'نجاح', description: 'تم حفظ الملاحظة.' });
+      }
+      setDialogState({ type: null, classId: null, isOpen: false });
+      form.reset();
+      fetchClasses();
+    } catch (error) {
+       toast({ variant: 'destructive', title: 'فشل التحديث', description: 'لم يتمكن من تحديث بيانات الصف.'});
+    } finally {
+      setIsProcessing(false);
     }
-
-    setDialogState({ type: null, classId: null, isOpen: false });
-    form.reset();
   }
 
-  const handleDeleteStudent = () => {
+  const handleDeleteStudent = async () => {
     if (dialogState.classId && dialogState.studentId) {
-        deleteStudent(dialogState.studentId, dialogState.classId);
-        toast({ title: 'نجاح', description: `تم حذف الطالب.` });
+        setIsProcessing(true);
+        try {
+            await deleteStudent(dialogState.studentId);
+            toast({ title: 'نجاح', description: `تم حذف الطالب.` });
+            fetchClasses();
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'فشل الحذف', description: 'لم يتمكن من حذف الطالب.'});
+        } finally {
+            setIsProcessing(false);
+            setDialogState({ type: null, classId: null, isOpen: false });
+        }
     }
-    setDialogState({ type: null, classId: null, isOpen: false });
   }
 
   const openDialog = (type: 'addStudent' | 'editClass' | 'editNote' | 'deleteStudent', classId: string, studentId?: string, studentName?: string) => {
     setDialogState({ type, classId, studentId, studentName, isOpen: true });
   }
 
-  const findClass = (classId: string | null): Class | undefined => {
+  const findClass = (classId: string | null): ClassWithStudents | undefined => {
     if (!classId) return undefined;
-    return teacherClasses.find(c => c.id === classId);
+    return classes.find(c => c.id === classId);
+  }
+
+  if (loading) {
+    return (
+        <div className="flex justify-center items-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+    )
   }
 
   return (
@@ -151,17 +220,19 @@ export default function ClassManagement() {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button type="submit">إنشاء</Button>
+                        <Button type="submit" disabled={isProcessing}>
+                          {isProcessing && <Loader2 className="ms-2 h-4 w-4 animate-spin" />}
+                          إنشاء
+                        </Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
         </Dialog>
       </div>
       
-      {teacherClasses.length > 0 ? (
+      {classes.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {teacherClasses.map(c => {
-            const students = getStudentsByClass(c.id);
+          {classes.map(c => {
             return (
               <Card key={c.id} className="flex flex-col">
                 <CardHeader>
@@ -184,7 +255,7 @@ export default function ClassManagement() {
                     </DropdownMenu>
                   </div>
                   <CardDescription>
-                    <Badge variant="secondary">{students.length} طالب</Badge>
+                    <Badge variant="secondary">{c.students.length} طالب</Badge>
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow">
@@ -202,8 +273,8 @@ export default function ClassManagement() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {students.length > 0 ? (
-                            students.map(student => (
+                        {c.students.length > 0 ? (
+                            c.students.map((student: Student) => (
                                 <TableRow key={student.id}>
                                     <TableCell>
                                     <div className="flex items-center gap-3">
@@ -265,7 +336,10 @@ export default function ClassManagement() {
                         <Input id="studentName" name="studentName" placeholder="الاسم الكامل للطالب"/>
                     </div>
                     <DialogFooter>
-                        <Button type="submit">إضافة الطالب</Button>
+                        <Button type="submit" disabled={isProcessing}>
+                          {isProcessing && <Loader2 className="ms-2 h-4 w-4 animate-spin" />}
+                          إضافة الطالب
+                        </Button>
                     </DialogFooter>
                 </form>
                 </>
@@ -281,7 +355,10 @@ export default function ClassManagement() {
                         <Input id="className" name="className" defaultValue={findClass(dialogState.classId)?.name} />
                     </div>
                     <DialogFooter>
-                        <Button type="submit">حفظ التغييرات</Button>
+                        <Button type="submit" disabled={isProcessing}>
+                          {isProcessing && <Loader2 className="ms-2 h-4 w-4 animate-spin" />}
+                          حفظ التغييرات
+                        </Button>
                     </DialogFooter>
                 </form>
                 </>
@@ -297,7 +374,10 @@ export default function ClassManagement() {
                         <Textarea id="classNote" name="classNote" defaultValue={findClass(dialogState.classId)?.note || ''} rows={5}/>
                     </div>
                     <DialogFooter>
-                        <Button type="submit">حفظ الملاحظة</Button>
+                        <Button type="submit" disabled={isProcessing}>
+                          {isProcessing && <Loader2 className="ms-2 h-4 w-4 animate-spin" />}
+                          حفظ الملاحظة
+                        </Button>
                     </DialogFooter>
                 </form>
                 </>
@@ -312,7 +392,10 @@ export default function ClassManagement() {
                 </DialogHeader>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setDialogState(prev => ({...prev, isOpen: false}))}>إلغاء</Button>
-                    <Button variant="destructive" onClick={handleDeleteStudent}>حذف</Button>
+                    <Button variant="destructive" onClick={handleDeleteStudent} disabled={isProcessing}>
+                      {isProcessing && <Loader2 className="ms-2 h-4 w-4 animate-spin" />}
+                      حذف
+                    </Button>
                 </DialogFooter>
                 </>
             )}
