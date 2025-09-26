@@ -6,21 +6,21 @@ export const users: User[] = [
     name: 'المديرة',
     email: 'admin@school.com',
     role: 'admin',
-    avatarUrl: `https://picsum.photos/seed/admin-avatar/100/100`,
+    avatarUrl: '',
   },
   {
     id: '2',
     name: 'المعلمة سارة',
     email: 'teacher1@school.com',
     role: 'teacher',
-    avatarUrl: `https://picsum.photos/seed/sara-avatar/100/100`,
+    avatarUrl: '',
   },
   {
     id: '3',
     name: 'المعلمة فاطمة',
     email: 'teacher2@school.com',
     role: 'teacher',
-    avatarUrl: `https://picsum.photos/seed/fatima-avatar/100/100`,
+    avatarUrl: '',
   },
 ];
 
@@ -31,13 +31,13 @@ export const classes: Class[] = [
 ];
 
 export const students: Student[] = [
-  { id: 's1', name: 'أحمد عبدالله', classId: 'c1', avatarUrl: `https://picsum.photos/seed/s1/100/100` },
-  { id: 's2', name: 'بدر خالد', classId: 'c1', avatarUrl: `https://picsum.photos/seed/s2/100/100` },
-  { id: 's3', name: 'جمانة علي', classId: 'c1', avatarUrl: `https://picsum.photos/seed/s3/100/100` },
-  { id: 's4', name: 'دانة فهد', classId: 'c2', avatarUrl: `https://picsum.photos/seed/s4/100/100` },
-  { id: 's5', name: 'هتان صالح', classId: 'c2', avatarUrl: `https://picsum.photos/seed/s5/100/100` },
-  { id: 's6', name: 'وليد محمد', classId: 'c3', avatarUrl: `https://picsum.photos/seed/s6/100/100` },
-  { id: 's7', name: 'زينب يوسف', classId: 'c3', avatarUrl: `https://picsum.photos/seed/s7/100/100` },
+  { id: 's1', name: 'أحمد عبدالله', classId: 'c1', avatarUrl: '' },
+  { id: 's2', name: 'بدر خالد', classId: 'c1', avatarUrl: '' },
+  { id: 's3', name: 'جمانة علي', classId: 'c1', avatarUrl: '' },
+  { id: 's4', name: 'دانة فهد', classId: 'c2', avatarUrl: '' },
+  { id: 's5', name: 'هتان صالح', classId: 'c2', avatarUrl: '' },
+  { id: 's6', name: 'وليد محمد', classId: 'c3', avatarUrl: '' },
+  { id: 's7', name: 'زينب يوسف', classId: 'c3', avatarUrl: '' },
 ];
 
 // Generate some random attendance data for the last 7 days

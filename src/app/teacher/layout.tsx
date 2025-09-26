@@ -22,17 +22,17 @@ export default function TeacherDashboardLayout({
   return (
     <SidebarProvider>
       <div className="flex min-h-screen">
-        <Sidebar collapsible="icon">
+        <Sidebar collapsible="icon" side="right">
           <SidebarHeader>
             <div className="flex items-center gap-2 p-2">
-              <Button variant="ghost" size="icon" className="h-10 w-10" asChild>
+              <Button variant="ghost" size="icon" className="h-10 w-10 text-sidebar-primary" asChild>
                 <Link href="/teacher/dashboard">
-                  <GraduationCap className="h-6 w-6 text-primary" />
+                  <GraduationCap className="h-6 w-6" />
                 </Link>
               </Button>
               <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-                <h2 className="font-headline text-lg font-semibold">AbsenceEye</h2>
-                <p className="text-xs text-muted-foreground">لوحة تحكم المعلمة</p>
+                <h2 className="font-headline text-lg font-semibold text-sidebar-foreground">AbsenceEye</h2>
+                <p className="text-xs text-sidebar-foreground/80">لوحة تحكم المعلمة</p>
               </div>
             </div>
           </SidebarHeader>

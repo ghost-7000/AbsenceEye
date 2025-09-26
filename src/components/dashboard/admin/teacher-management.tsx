@@ -3,7 +3,6 @@
 import * as React from 'react';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -82,7 +81,7 @@ export default function TeacherManagement() {
         name,
         email,
         role: 'teacher',
-        avatarUrl: `https://picsum.photos/seed/${Date.now()}/100/100`,
+        avatarUrl: ``, // No avatar
     };
 
     setTeachers(prev => [...prev, newTeacher]);
@@ -91,6 +90,7 @@ export default function TeacherManagement() {
         description: `تمت إضافة المعلمة ${name} بنجاح.`,
     });
     setAddDialogOpen(false);
+    form.reset();
   };
 
   const handleEditTeacher = (event: React.FormEvent<HTMLFormElement>) => {
@@ -125,7 +125,7 @@ export default function TeacherManagement() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
             <div>
                 <CardTitle>إدارة المعلمات</CardTitle>
                 <CardDescription>
@@ -136,7 +136,7 @@ export default function TeacherManagement() {
                 <DialogTrigger asChild>
                     <Button size="sm" className="gap-1">
                         <PlusCircle className="h-4 w-4" />
-                        إضافة معلمة
+                        <span>إضافة معلمة</span>
                     </Button>
                 </DialogTrigger>
                 <DialogContent>
@@ -188,7 +188,7 @@ export default function TeacherManagement() {
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
-                        <AvatarImage src={teacher.avatarUrl} alt={teacher.name} data-ai-hint="avatar abstract" />
+                        <AvatarImage src={undefined} alt={teacher.name} />
                         <AvatarFallback>{teacher.name.charAt(0)}</AvatarFallback>
                       </Avatar>
                       {teacher.name}

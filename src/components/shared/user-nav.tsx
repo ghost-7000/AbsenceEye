@@ -15,18 +15,31 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export function UserNav() {
   const router = useRouter();
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const [userRole, setUserRole] = useState('');
+  const [userAvatar, setUserAvatar] = useState('');
+  const [isClient, setIsClient] = useState(false);
 
-  useEffect(() => {
+
+  const updateUserData = () => {
     setUserName(localStorage.getItem('userName') || '');
     setUserEmail(localStorage.getItem('userEmail') || '');
     setUserRole(localStorage.getItem('userRole') || '');
+    setUserAvatar(localStorage.getItem('userAvatar') || '');
+  }
+
+  useEffect(() => {
+    setIsClient(true);
+    updateUserData();
+    
+    window.addEventListener('storage', updateUserData);
+    return () => {
+        window.removeEventListener('storage', updateUserData)
+    }
   }, []);
 
   const handleLogout = () => {
@@ -34,21 +47,21 @@ export function UserNav() {
     router.push('/login');
   };
 
-  const avatarSrc = userRole === 'admin'
-    ? `https://picsum.photos/seed/admin-avatar/100/100`
-    : `https://picsum.photos/seed/teacher-avatar/100/100`;
-
   const profileUrl = `/${userRole}/profile`;
   const settingsUrl = `/${userRole}/settings`;
+
+  if (!isClient) {
+    return null; // Don't render on server
+  }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-9 w-9">
-            <AvatarImage src={avatarSrc} alt={userName} data-ai-hint="avatar abstract" />
+            <AvatarImage src={userAvatar} alt={userName} />
             <AvatarFallback>
-              <UserIcon />
+              {userName ? userName.charAt(0) : <UserIcon />}
             </AvatarFallback>
           </Avatar>
         </Button>
