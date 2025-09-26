@@ -129,13 +129,13 @@ export default function AttendanceTracker() {
                   </TableCell>
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center gap-4">
-                        <span className={`text-sm font-medium ${attendance[student.id] === 'absent' ? 'text-destructive' : 'text-muted-foreground'}`}>غائب</span>
+                        <span className={`text-sm font-medium ${attendance[student.id] === 'absent' ? 'text-red-500' : 'text-muted-foreground'}`}>غائب</span>
                         <Switch
                             checked={attendance[student.id] === 'present'}
                             onCheckedChange={(checked) => handleAttendanceChange(student.id, checked)}
                             aria-label={`حالة حضور ${student.name}`}
                         />
-                         <span className={`text-sm font-medium ${attendance[student.id] === 'present' ? 'text-primary' : 'text-muted-foreground'}`}>حاضر</span>
+                         <span className={`text-sm font-medium ${attendance[student.id] === 'present' ? 'text-green-600' : 'text-muted-foreground'}`}>حاضر</span>
                     </div>
                   </TableCell>
                 </TableRow>
