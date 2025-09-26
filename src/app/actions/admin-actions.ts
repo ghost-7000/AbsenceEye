@@ -106,22 +106,33 @@ export interface DetailedAttendanceRecord extends AttendanceRecord {
 export async function getDetailedAttendanceRecords(): Promise<DetailedAttendanceRecord[]> {
     await dbConnect();
 
-    const records = await AttendanceRecordModel.find().sort({ date: -1 }).lean();
+    const records: AttendanceRecord[] = await AttendanceRecordModel.find().sort({ date: -1 }).lean();
     const studentIds = records.map(r => r.studentId);
-    const classIds = records.map(r => r.classId);
+    // Using string IDs directly might be problematic if they are not ObjectId compatible.
+    // However, since we defined them as String in the schema, it should be fine.
+    // For joins, it's better to use native ObjectIds if possible.
 
     const students = await StudentModel.find({ _id: { $in: studentIds } }).lean();
-    const classes = await ClassModel.find({ _id: { $in: classIds } }).lean();
+    const classes = await ClassModel.find({ _id: { $in: records.map(r => r.classId) } }).lean();
 
     const studentMap = new Map(students.map(s => [s._id.toString(), s.name]));
     const classMap = new Map(classes.map(c => [c._id.toString(), c.name]));
 
-    const detailedRecords = records.map(record => ({
-        ...record,
-        id: record._id.toString(),
-        studentName: studentMap.get(record.studentId.toString()) || 'طالب محذوف',
-        className: classMap.get(record.classId.toString()) || 'صف محذوف',
-    }));
+    const detailedRecords = records.map(record => {
+        const studentName = studentMap.get(record.studentId.toString());
+        const className = classMap.get(record.classId.toString());
 
+        // We only return records for which we found a student and class
+        if (studentName && className) {
+            return {
+                ...record,
+                id: record._id.toString(),
+                studentName: studentName,
+                className: className,
+            };
+        }
+        return null;
+    }).filter((r): r is DetailedAttendanceRecord => r !== null);
+    
     return JSON.parse(JSON.stringify(detailedRecords));
 }

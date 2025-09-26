@@ -144,10 +144,10 @@ export async function getTeacherStats(teacherId: string) {
 export async function getDetailedAttendanceForTeacher(teacherId: string): Promise<DetailedAttendanceRecord[]> {
     await dbConnect();
 
-    const teacherClasses = await ClassModel.find({ teacherId }).lean();
+    const teacherClasses: Class[] = await ClassModel.find({ teacherId }).lean();
     const classIds = teacherClasses.map(c => c._id.toString());
 
-    const records = await AttendanceRecordModel.find({ classId: { $in: classIds } }).sort({ date: -1 }).lean();
+    const records: AttendanceRecord[] = await AttendanceRecordModel.find({ classId: { $in: classIds } }).sort({ date: -1 }).lean();
     const studentIds = records.map(r => r.studentId);
     
     const students = await StudentModel.find({ _id: { $in: studentIds } }).lean();
@@ -155,12 +155,21 @@ export async function getDetailedAttendanceForTeacher(teacherId: string): Promis
     const studentMap = new Map(students.map(s => [s._id.toString(), s.name]));
     const classMap = new Map(teacherClasses.map(c => [c._id.toString(), c.name]));
 
-    const detailedRecords = records.map(record => ({
-        ...record,
-        id: record._id.toString(),
-        studentName: studentMap.get(record.studentId.toString()) || 'طالب محذوف',
-        className: classMap.get(record.classId.toString()) || 'صف محذوف',
-    }));
+    const detailedRecords = records.map(record => {
+        const studentName = studentMap.get(record.studentId.toString());
+        const className = classMap.get(record.classId.toString());
+
+        if (studentName && className) {
+             return {
+                ...record,
+                id: record._id.toString(),
+                studentName: studentName,
+                className: className,
+            };
+        }
+        return null;
+    }).filter((r): r is DetailedAttendanceRecord => r !== null);
+
 
     return JSON.parse(JSON.stringify(detailedRecords));
 }
