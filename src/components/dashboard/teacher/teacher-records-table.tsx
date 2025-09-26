@@ -68,7 +68,8 @@ export default function TeacherRecordsTable() {
   const groupedAndFilteredRecords: GroupedRecords = React.useMemo(() => {
     const recordsForDate = allRecords.filter(record => {
         // Ensure we compare only the date part of the string
-        return record.date.substring(0, 10) === filterDate;
+        const recordDate = typeof record.date === 'string' ? record.date.substring(0, 10) : format(record.date, 'yyyy-MM-dd');
+        return recordDate === filterDate;
     });
 
     const grouped: GroupedRecords = {};
