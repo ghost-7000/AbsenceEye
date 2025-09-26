@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -36,22 +36,40 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { users as initialUsers } from '@/lib/data';
 import type { User } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { getTeachers, addTeacher, updateTeacher, deleteTeacher } from '@/app/actions/admin-actions';
 
 export default function TeacherManagement() {
   const { toast } = useToast();
-  const [teachers, setTeachers] = React.useState<User[]>(
-    initialUsers.filter(u => u.role === 'teacher')
-  );
+  const [teachers, setTeachers] = React.useState<User[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [isProcessing, setIsProcessing] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState('');
+  
   const [isAddDialogOpen, setAddDialogOpen] = React.useState(false);
   const [isEditDialogOpen, setEditDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [selectedTeacher, setSelectedTeacher] = React.useState<User | null>(null);
+
+  const fetchTeachers = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getTeachers();
+      setTeachers(data);
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'خطأ', description: 'فشل تحميل قائمة المعلمات.'});
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  React.useEffect(() => {
+    fetchTeachers();
+  }, [fetchTeachers]);
+
 
   const filteredTeachers = teachers.filter(
     teacher =>
@@ -59,67 +77,70 @@ export default function TeacherManagement() {
       teacher.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAddTeacher = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleAddTeacher = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setIsProcessing(true);
     const form = event.currentTarget;
     const formData = new FormData(form);
     const name = formData.get('name') as string;
     const email = formData.get('email') as string;
     
-    // Basic validation
     if (!name || !email) {
-        toast({
-            variant: 'destructive',
-            title: 'خطأ',
-            description: 'الرجاء ملء جميع الحقول.',
-        });
+        toast({ variant: 'destructive', title: 'خطأ', description: 'الرجاء ملء جميع الحقول.' });
+        setIsProcessing(false);
         return;
     }
 
-    const newTeacher: User = {
-        id: `user-${Date.now()}`,
-        name,
-        email,
-        role: 'teacher',
-        avatarUrl: ``, // No avatar
-    };
-
-    setTeachers(prev => [...prev, newTeacher]);
-    toast({
-        title: 'نجاح',
-        description: `تمت إضافة المعلمة ${name} بنجاح.`,
-    });
-    setAddDialogOpen(false);
-    form.reset();
+    try {
+      await addTeacher(name, email);
+      toast({ title: 'نجاح', description: `تمت إضافة المعلمة ${name} بنجاح.` });
+      fetchTeachers(); // Refresh
+      setAddDialogOpen(false);
+      form.reset();
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'فشل الإضافة', description: 'حدث خطأ أثناء إضافة المعلمة.'});
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const handleEditTeacher = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleEditTeacher = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selectedTeacher) return;
+    setIsProcessing(true);
 
     const form = event.currentTarget;
     const formData = new FormData(form);
     const name = formData.get('name') as string;
     const email = formData.get('email') as string;
 
-    setTeachers(prev => prev.map(t => t.id === selectedTeacher.id ? {...t, name, email} : t));
-    toast({
-        title: 'نجاح',
-        description: `تم تعديل بيانات المعلمة ${name} بنجاح.`,
-    });
-    setEditDialogOpen(false);
-    setSelectedTeacher(null);
+    try {
+      await updateTeacher(selectedTeacher._id.toString(), name, email);
+      toast({ title: 'نجاح', description: `تم تعديل بيانات المعلمة ${name} بنجاح.` });
+      fetchTeachers();
+      setEditDialogOpen(false);
+      setSelectedTeacher(null);
+    } catch (error) {
+       toast({ variant: 'destructive', title: 'فشل التعديل', description: 'حدث خطأ أثناء تعديل البيانات.'});
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const handleDeleteTeacher = () => {
+  const handleDeleteTeacher = async () => {
     if (!selectedTeacher) return;
-    setTeachers(prev => prev.filter(t => t.id !== selectedTeacher.id));
-     toast({
-        title: 'نجاح',
-        description: `تم حذف المعلمة ${selectedTeacher.name} بنجاح.`,
-    });
-    setDeleteDialogOpen(false);
-    setSelectedTeacher(null);
+    setIsProcessing(true);
+    try {
+      await deleteTeacher(selectedTeacher._id.toString());
+      toast({ title: 'نجاح', description: `تم حذف المعلمة ${selectedTeacher.name} بنجاح.` });
+      fetchTeachers();
+      setDeleteDialogOpen(false);
+      setSelectedTeacher(null);
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'فشل الحذف', description: 'حدث خطأ أثناء حذف المعلمة.'});
+    } finally {
+      setIsProcessing(false);
+    }
   }
 
   return (
@@ -155,7 +176,10 @@ export default function TeacherManagement() {
                             </div>
                         </div>
                         <DialogFooter>
-                            <Button type="submit">إضافة</Button>
+                            <Button type="submit" disabled={isProcessing}>
+                              {isProcessing && <Loader2 className="ms-2 h-4 w-4 animate-spin"/>}
+                              إضافة
+                            </Button>
                         </DialogFooter>
                     </form>
                 </DialogContent>
@@ -171,58 +195,64 @@ export default function TeacherManagement() {
         </div>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>الاسم</TableHead>
-              <TableHead>البريد الإلكتروني</TableHead>
-              <TableHead>
-                <span className="sr-only">الإجراءات</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredTeachers.length > 0 ? (
-              filteredTeachers.map(teacher => (
-                <TableRow key={teacher.id}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-9 w-9">
-                        <AvatarImage src={undefined} alt={teacher.name} />
-                        <AvatarFallback>{teacher.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      {teacher.name}
-                    </div>
-                  </TableCell>
-                  <TableCell>{teacher.email}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>الإجراءات</DropdownMenuLabel>
-                        <DropdownMenuItem onSelect={() => { setSelectedTeacher(teacher); setEditDialogOpen(true); }}>تعديل</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" onSelect={() => { setSelectedTeacher(teacher); setDeleteDialogOpen(true); }}>
-                          حذف
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+        {loading ? (
+            <div className="flex justify-center items-center h-48">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>الاسم</TableHead>
+                <TableHead>البريد الإلكتروني</TableHead>
+                <TableHead>
+                  <span className="sr-only">الإجراءات</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredTeachers.length > 0 ? (
+                filteredTeachers.map(teacher => (
+                  <TableRow key={teacher._id.toString()}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-9 w-9">
+                          <AvatarImage src={teacher.avatarUrl || undefined} alt={teacher.name} />
+                          <AvatarFallback>{teacher.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        {teacher.name}
+                      </div>
+                    </TableCell>
+                    <TableCell>{teacher.email}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>الإجراءات</DropdownMenuLabel>
+                          <DropdownMenuItem onSelect={() => { setSelectedTeacher(teacher); setEditDialogOpen(true); }}>تعديل</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive" onSelect={() => { setSelectedTeacher(teacher); setDeleteDialogOpen(true); }}>
+                            حذف
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={3} className="h-24 text-center">
+                    لا توجد نتائج.
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={3} className="h-24 text-center">
-                  لا توجد نتائج.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              )}
+            </TableBody>
+          </Table>
+        )}
       </CardContent>
 
         {/* Edit Dialog */}
@@ -243,7 +273,10 @@ export default function TeacherManagement() {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button type="submit">حفظ التعديلات</Button>
+                        <Button type="submit" disabled={isProcessing}>
+                          {isProcessing && <Loader2 className="ms-2 h-4 w-4 animate-spin"/>}
+                          حفظ التعديلات
+                        </Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -260,7 +293,10 @@ export default function TeacherManagement() {
                 </DialogHeader>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>إلغاء</Button>
-                    <Button variant="destructive" onClick={handleDeleteTeacher}>حذف</Button>
+                    <Button variant="destructive" onClick={handleDeleteTeacher} disabled={isProcessing}>
+                       {isProcessing && <Loader2 className="ms-2 h-4 w-4 animate-spin"/>}
+                       حذف
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -268,3 +304,5 @@ export default function TeacherManagement() {
     </Card>
   );
 }
+
+    

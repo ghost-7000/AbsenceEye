@@ -1,8 +1,9 @@
 'use server'
 
 import dbConnect from "@/lib/mongodb";
-import { AttendanceRecordModel, StudentModel, ClassModel } from "@/lib/models";
-import type { Student } from "@/lib/types";
+import { AttendanceRecordModel, StudentModel, ClassModel, UserModel } from "@/lib/models";
+import type { Student, User } from "@/lib/types";
+import { revalidatePath } from "next/cache";
 
 interface AbsentStudent extends Student {
   absences: number;
@@ -49,5 +50,39 @@ export async function getMostAbsentStudents(): Promise<AbsentStudent[]> {
         };
     }).filter((s): s is AbsentStudent => s !== null);
 
-    return mostAbsent;
+    // This is needed because the lean object doesn't have the id property
+    return JSON.parse(JSON.stringify(mostAbsent));
+}
+
+export async function getTeachers(): Promise<User[]> {
+    await dbConnect();
+    const teachers = await UserModel.find({ role: 'teacher' }).lean();
+    return JSON.parse(JSON.stringify(teachers));
+}
+
+export async function addTeacher(name: string, email: string) {
+    await dbConnect();
+    // In a real app, you would also set a default password and handle email verification
+    const newTeacher = new UserModel({
+        name,
+        email,
+        role: 'teacher',
+        avatarUrl: ''
+    });
+    await newTeacher.save();
+    revalidatePath('/admin/teachers');
+    revalidatePath('/admin/dashboard');
+}
+
+export async function updateTeacher(teacherId: string, name: string, email: string) {
+    await dbConnect();
+    await UserModel.findByIdAndUpdate(teacherId, { name, email });
+    revalidatePath('/admin/teachers');
+}
+
+export async function deleteTeacher(teacherId: string) {
+    await dbConnect();
+    await UserModel.findByIdAndDelete(teacherId);
+    revalidatePath('/admin/teachers');
+    revalidatePath('/admin/dashboard');
 }
