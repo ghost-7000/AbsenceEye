@@ -51,8 +51,9 @@ export default function TeacherRecordsTable() {
     fetchRecords();
   }, []);
 
-  const filteredRecords = loading ? [] : allRecords.filter(record => {
-    const matchesDate = record.date === filterDate;
+  const filteredRecords = allRecords.filter(record => {
+    const recordDate = record.date.substring(0, 10);
+    const matchesDate = recordDate === filterDate;
     if (!matchesDate) return false;
 
     const matchesSearch = searchTerm === '' || 
