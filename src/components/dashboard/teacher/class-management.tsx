@@ -52,8 +52,12 @@ export default function ClassManagement() {
   const fetchClasses = React.useCallback(async () => {
     setLoading(true);
     try {
-      // In a real app, you would pass the logged-in teacher's ID
-      const teacherId = 'user-2'; 
+      const teacherId = localStorage.getItem('userId');
+      if (!teacherId) {
+          toast({ variant: 'destructive', title: 'خطأ', description: 'لم يتم العثور على المعلم.' });
+          setLoading(false);
+          return;
+      }
       const teacherClasses = await getTeacherClassesAndStudents(teacherId);
       setClasses(teacherClasses);
     } catch (error) {
@@ -74,10 +78,15 @@ export default function ClassManagement() {
   const handleAddClass = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsProcessing(true);
+    const teacherId = localStorage.getItem('userId');
+    if (!teacherId) {
+        toast({ variant: 'destructive', title: 'خطأ', description: 'معرف المعلم غير موجود.' });
+        setIsProcessing(false);
+        return;
+    }
     const form = event.currentTarget;
     const formData = new FormData(form);
     const name = formData.get('className') as string;
-    const teacherId = 'user-2'; // Static for demo
 
     if (!name) {
       toast({ variant: 'destructive', title: 'خطأ', description: 'الرجاء إدخال اسم الصف.' });
@@ -265,6 +274,7 @@ export default function ClassManagement() {
                             <p className="text-muted-foreground whitespace-pre-wrap">{c.note}</p>
                         </div>
                     )}
+                  <div className="border rounded-md max-h-64 overflow-y-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -302,6 +312,7 @@ export default function ClassManagement() {
                         )}
                     </TableBody>
                   </Table>
+                  </div>
                 </CardContent>
                 <CardFooter>
                     <Button variant="outline" className="w-full" onClick={() => openDialog('addStudent', c.id)}>

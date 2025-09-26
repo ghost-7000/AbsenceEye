@@ -25,12 +25,19 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { getUser, updateUser, updatePassword } from '@/app/actions/auth-actions';
+import type { User } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
+
 
 const profileSchema = z.object({
   name: z.string().min(2, { message: 'الاسم يجب أن يتكون من حرفين على الأقل.' }),
   email: z.string().email({ message: 'الرجاء إدخال بريد إلكتروني صالح.' }),
-  password: z.string().optional(),
-  confirmPassword: z.string().optional(),
+});
+
+const passwordSchema = z.object({
+  password: z.string().min(6, 'يجب أن تكون كلمة المرور 6 أحرف على الأقل.'),
+  confirmPassword: z.string(),
 }).refine(data => data.password === data.confirmPassword, {
   message: 'كلمتا المرور غير متطابقتين.',
   path: ['confirmPassword'],
@@ -38,28 +45,41 @@ const profileSchema = z.object({
 
 export default function AdminProfilePage() {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [user, setUser] = React.useState({ name: '', email: '', avatar: '' });
+  const [loading, setLoading] = React.useState(true);
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [isSavingPassword, setIsSavingPassword] = React.useState(false);
+
+  const [user, setUser] = React.useState<User | null>(null);
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
-    defaultValues: {
-      name: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-    },
+    defaultValues: { name: '', email: '' },
   });
 
+  const passwordForm = useForm<z.infer<typeof passwordSchema>>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: { password: '', confirmPassword: '' },
+  });
+
+
   React.useEffect(() => {
-    const name = localStorage.getItem('userName') || 'المديرة';
-    const email = localStorage.getItem('userEmail') || 'admin@school.com';
-    const avatar = localStorage.getItem('userAvatar') || '';
-    setUser({ name, email, avatar });
-    form.reset({ name, email });
+    const fetchUser = async () => {
+      setLoading(true);
+      const userId = localStorage.getItem('userId');
+      if (userId) {
+        const fetchedUser = await getUser(userId);
+        setUser(fetchedUser);
+        form.reset({
+          name: fetchedUser.name,
+          email: fetchedUser.email,
+        });
+      }
+      setLoading(false);
+    };
+    fetchUser();
   }, [form]);
 
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,26 +93,94 @@ export default function AdminProfilePage() {
     }
   };
 
-  const onSubmit = (values: z.infer<typeof profileSchema>) => {
-    setIsLoading(true);
-    console.log(values);
+  const onSubmit = async (values: z.infer<typeof profileSchema>) => {
+    if (!user) return;
+    setIsSaving(true);
+    
+    try {
+      const updatedUser = await updateUser(user.id, { 
+        name: values.name, 
+        email: values.email, 
+        avatarDataUrl: avatarPreview 
+      });
 
-    setTimeout(() => {
-      localStorage.setItem('userName', values.name);
-      localStorage.setItem('userEmail', values.email);
-      if (avatarPreview) {
-        localStorage.setItem('userAvatar', avatarPreview);
+      setUser(updatedUser);
+      localStorage.setItem('userName', updatedUser.name);
+      localStorage.setItem('userEmail', updatedUser.email);
+      if (updatedUser.avatarUrl) {
+          localStorage.setItem('userAvatar', updatedUser.avatarUrl);
       }
+      window.dispatchEvent(new Event("storage"));
       
       toast({
         title: 'تم تحديث الملف الشخصي',
         description: 'تم حفظ معلوماتك الجديدة بنجاح.',
       });
-      setIsLoading(false);
-      // Force a re-render of components that use localStorage
-      window.dispatchEvent(new Event("storage"));
-    }, 1000);
+      setAvatarPreview(null);
+    } catch (error) {
+       toast({
+        variant: 'destructive',
+        title: 'خطأ',
+        description: 'فشل تحديث الملف الشخصي.',
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  const onPasswordSubmit = async (values: z.infer<typeof passwordSchema>) => {
+    if (!user) return;
+    setIsSavingPassword(true);
+    try {
+      await updatePassword(user.id, values.password);
+      toast({
+        title: 'تم تحديث كلمة المرور',
+        description: 'تم تغيير كلمة المرور بنجاح.',
+      });
+      passwordForm.reset();
+    } catch (error) {
+       toast({
+        variant: 'destructive',
+        title: 'خطأ',
+        description: 'فشل تحديث كلمة المرور.',
+      });
+    } finally {
+      setIsSavingPassword(false);
+    }
+  }
+  
+  if (loading) {
+      return (
+          <div className="grid gap-6">
+              <Card>
+                  <CardHeader>
+                      <Skeleton className="h-8 w-32" />
+                      <Skeleton className="h-4 w-64" />
+                  </CardHeader>
+                  <CardContent className="space-y-8">
+                       <div className="flex items-center gap-6">
+                           <Skeleton className="h-24 w-24 rounded-full" />
+                           <div className="grid gap-2">
+                               <Skeleton className="h-10 w-36" />
+                               <Skeleton className="h-3 w-48" />
+                           </div>
+                       </div>
+                       <div className="space-y-2">
+                           <Skeleton className="h-4 w-16" />
+                           <Skeleton className="h-10 w-full" />
+                       </div>
+                       <div className="space-y-2">
+                           <Skeleton className="h-4 w-16" />
+                           <Skeleton className="h-10 w-full" />
+                       </div>
+                  </CardContent>
+                  <CardFooter className="border-t px-6 py-4">
+                       <Skeleton className="h-10 w-32" />
+                  </CardFooter>
+              </Card>
+          </div>
+      )
+  }
 
   return (
     <div className="grid gap-6">
@@ -108,8 +196,8 @@ export default function AdminProfilePage() {
             <CardContent className="space-y-8">
               <div className="flex items-center gap-6">
                 <Avatar className="h-24 w-24">
-                  <AvatarImage src={avatarPreview || user.avatar} />
-                  <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
+                  <AvatarImage src={avatarPreview || user?.avatarUrl} alt={user?.name}/>
+                  <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className="grid gap-2">
                    <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
@@ -155,41 +243,59 @@ export default function AdminProfilePage() {
                   </FormItem>
                 )}
               />
-               <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>كلمة المرور الجديدة</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="اتركها فارغة لعدم التغيير" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-               <FormField
-                control={form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>تأكيد كلمة المرور الجديدة</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="أعد إدخال كلمة المرور" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </CardContent>
             <CardFooter className="border-t px-6 py-4">
-              <Button type="submit" disabled={isLoading}>
-                {isLoading && <Loader2 className="ms-2 h-4 w-4 animate-spin" />}
+              <Button type="submit" disabled={isSaving}>
+                {isSaving && <Loader2 className="ms-2 h-4 w-4 animate-spin" />}
                 حفظ التغييرات
               </Button>
             </CardFooter>
           </form>
         </Form>
+      </Card>
+      
+      <Card>
+          <CardHeader>
+              <CardTitle>تغيير كلمة المرور</CardTitle>
+          </CardHeader>
+          <Form {...passwordForm}>
+              <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}>
+                  <CardContent className="space-y-4">
+                      <FormField
+                          control={passwordForm.control}
+                          name="password"
+                          render={({ field }) => (
+                              <FormItem>
+                                  <FormLabel>كلمة المرور الجديدة</FormLabel>
+                                  <FormControl>
+                                      <Input type="password" placeholder="••••••••" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                              </FormItem>
+                          )}
+                      />
+                      <FormField
+                          control={passwordForm.control}
+                          name="confirmPassword"
+                          render={({ field }) => (
+                              <FormItem>
+                                  <FormLabel>تأكيد كلمة المرور الجديدة</FormLabel>
+                                  <FormControl>
+                                      <Input type="password" placeholder="••••••••" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                              </FormItem>
+                          )}
+                      />
+                  </CardContent>
+                  <CardFooter className="border-t px-6 py-4">
+                      <Button type="submit" disabled={isSavingPassword}>
+                          {isSavingPassword && <Loader2 className="ms-2 h-4 w-4 animate-spin" />}
+                          تغيير كلمة المرور
+                      </Button>
+                  </CardFooter>
+              </form>
+          </Form>
       </Card>
     </div>
   );

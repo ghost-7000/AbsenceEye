@@ -15,6 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Skeleton } from '../ui/skeleton';
 
 export function UserNav() {
   const router = useRouter();
@@ -51,7 +52,7 @@ export function UserNav() {
   const settingsUrl = `/${userRole}/settings`;
 
   if (!isClient) {
-    return null; // Don't render on server
+    return <Skeleton className="h-9 w-9 rounded-full" />;
   }
 
   return (

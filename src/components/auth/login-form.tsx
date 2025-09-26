@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { authenticate } from '@/app/actions/auth-actions';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'الرجاء إدخال بريد إلكتروني صالح.' }),
@@ -28,11 +29,6 @@ const formSchema = z.object({
     required_error: 'الرجاء اختيار الدور.',
   }),
 });
-
-const DEMO_ACCOUNTS = {
-  admin: { email: 'admin@school.com', password: 'Admin123' },
-  teacher: { email: 'teacher1@school.com', password: 'Teacher123' },
-};
 
 export function LoginForm() {
   const router = useRouter();
@@ -48,35 +44,42 @@ export function LoginForm() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      const { email, password, role } = values;
-      const account = DEMO_ACCOUNTS[role];
+    try {
+        const result = await authenticate(values);
 
-      if (email === account.email && password === account.password) {
-        toast({
-          title: 'تم تسجيل الدخول بنجاح',
-          description: `مرحباً بك في لوحة تحكم ${role === 'admin' ? 'المديرة' : 'المعلمة'}.`,
-        });
-        
-        // In a real app, you'd store a session token. Here we use localStorage for demo simplicity.
-        localStorage.setItem('userRole', role);
-        localStorage.setItem('userName', role === 'admin' ? 'المديرة' : 'المعلمة سارة');
-        localStorage.setItem('userEmail', email);
+        if (result.success && result.user) {
+            const { user } = result;
+            toast({
+                title: 'تم تسجيل الدخول بنجاح',
+                description: `مرحباً بك ${user.name}.`,
+            });
+            
+            localStorage.setItem('userId', user.id);
+            localStorage.setItem('userRole', user.role);
+            localStorage.setItem('userName', user.name);
+            localStorage.setItem('userEmail', user.email);
+            localStorage.setItem('userAvatar', user.avatarUrl || '');
 
-        router.replace(role === 'admin' ? '/admin/dashboard' : '/teacher/dashboard');
-      } else {
+            router.replace(user.role === 'admin' ? '/admin/dashboard' : '/teacher/dashboard');
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'خطأ في تسجيل الدخول',
+                description: result.message || 'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
+            });
+            setIsLoading(false);
+        }
+    } catch (error) {
         toast({
-          variant: 'destructive',
-          title: 'خطأ في تسجيل الدخول',
-          description: 'البريد الإلكتروني أو كلمة المرور غير صحيحة. الرجاء المحاولة مرة أخرى.',
+            variant: 'destructive',
+            title: 'خطأ غير متوقع',
+            description: 'حدث خطأ أثناء محاولة تسجيل الدخول. الرجاء المحاولة مرة أخرى.',
         });
         setIsLoading(false);
-      }
-    }, 1000);
+    }
   }
 
   return (

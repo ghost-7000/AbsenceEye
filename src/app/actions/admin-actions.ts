@@ -37,18 +37,19 @@ export async function getMostAbsentStudents(): Promise<AbsentStudent[]> {
 
     // 5. Combine the data
     const mostAbsent: AbsentStudent[] = studentIds.map(studentId => {
-        const student = studentMap.get(studentId);
+        const student = studentMap.get(studentId.toString());
         if (!student) return null;
 
-        const studentClass = classMap.get(student.classId);
+        const studentClass = classMap.get(student.classId.toString());
 
         return {
             ...student,
             id: student._id.toString(),
-            absences: absenceMap.get(studentId) || 0,
+            absences: absenceMap.get(studentId.toString()) || 0,
             className: studentClass?.name || 'غير معروف',
         };
-    }).filter((s): s is AbsentStudent => s !== null);
+    }).filter((s): s is AbsentStudent => s !== null)
+      .sort((a, b) => b.absences - a.absences);
 
     // This is needed because the lean object doesn't have the id property
     return JSON.parse(JSON.stringify(mostAbsent));
@@ -66,6 +67,7 @@ export async function addTeacher(name: string, email: string) {
     const newTeacher = new UserModel({
         name,
         email,
+        password: 'password123', // Demo password
         role: 'teacher',
         avatarUrl: ''
     });
@@ -83,6 +85,7 @@ export async function updateTeacher(teacherId: string, name: string, email: stri
 export async function deleteTeacher(teacherId: string) {
     await dbConnect();
     await UserModel.findByIdAndDelete(teacherId);
+    // Also need to handle re-assigning or deleting classes/students of this teacher if needed
     revalidatePath('/admin/teachers');
     revalidatePath('/admin/dashboard');
 }

@@ -28,42 +28,56 @@ import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 
-import type { Student, AttendanceStatus, Class } from '@/lib/types';
+import type { Student, AttendanceStatus, Class, AttendanceRecord } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
-import { getTeacherClassesAndStudents, saveAttendance } from '@/app/actions/teacher-actions';
+import { getTeacherClassesAndStudents, saveAttendance, getAttendanceForDate } from '@/app/actions/teacher-actions';
 import { Loader2 } from 'lucide-react';
+import type { ClassWithStudents } from '@/app/actions/teacher-actions';
+import { format } from 'date-fns';
 
-
-export default function AttendanceTracker() {
-  const [teacherClasses, setTeacherClasses] = React.useState<Class[]>([]);
+export function AttendanceTracker() {
+  const [teacherClasses, setTeacherClasses] = React.useState<ClassWithStudents[]>([]);
   const [students, setStudents] = React.useState<Student[]>([]);
-  const [selectedClass, setSelectedClass] = React.useState<string>('');
+  const [selectedClassId, setSelectedClassId] = React.useState<string>('');
   const [attendance, setAttendance] = React.useState<Record<string, AttendanceStatus>>({});
   const [loading, setLoading] = React.useState(true);
   const [isSaving, setIsSaving] = React.useState(false);
 
   const { toast } = useToast();
 
+  const initializeAttendance = React.useCallback((studentsToInit: Student[], savedAttendance: AttendanceRecord[]) => {
+      const savedMap = new Map(savedAttendance.map(rec => [rec.studentId, rec.status]));
+      const initialAttendance: Record<string, AttendanceStatus> = {};
+      studentsToInit.forEach(student => {
+          initialAttendance[student.id] = savedMap.get(student.id) || 'present';
+      });
+      setAttendance(initialAttendance);
+  }, []);
+
   React.useEffect(() => {
     async function fetchData() {
         setLoading(true);
         try {
-            const teacherId = 'user-2'; // static for demo
-            const classesWithStudents = await getTeacherClassesAndStudents(teacherId);
-            const classes = classesWithStudents.map(({ students, ...c }) => c);
-            setTeacherClasses(classes);
+            const userId = localStorage.getItem('userId');
+            if (!userId) {
+                toast({ variant: 'destructive', title: 'خطأ', description: 'لم يتم العثور على المعلم.' });
+                setLoading(false);
+                return;
+            }
+            
+            const classesWithStudents = await getTeacherClassesAndStudents(userId);
+            setTeacherClasses(classesWithStudents);
+            
+            const today = format(new Date(), 'yyyy-MM-dd');
+            const savedAttendance = await getAttendanceForDate(userId, today);
 
-            if (classes.length > 0) {
-                const currentSelectedClass = classes[0].id;
-                setSelectedClass(currentSelectedClass);
-                const classStudents = classesWithStudents.find(c => c.id === currentSelectedClass)?.students || [];
+            if (classesWithStudents.length > 0) {
+                const firstClassId = classesWithStudents[0].id;
+                setSelectedClassId(firstClassId);
+                const classStudents = classesWithStudents[0].students || [];
                 setStudents(classStudents);
-                const initialAttendance = classStudents.reduce((acc, student) => {
-                    acc[student.id] = 'present';
-                    return acc;
-                }, {} as Record<string, AttendanceStatus>);
-                setAttendance(initialAttendance);
+                initializeAttendance(classStudents, savedAttendance);
             }
         } catch (error) {
             toast({ variant: 'destructive', title: 'خطأ', description: 'فشل تحميل بيانات الصفوف.' });
@@ -72,25 +86,22 @@ export default function AttendanceTracker() {
         }
     }
     fetchData();
-  }, [toast]);
+  }, [toast, initializeAttendance]);
 
-  const handleClassChange = async (classId: string) => {
-    setSelectedClass(classId);
-    setLoading(true);
-     try {
-        const teacherId = 'user-2';
-        const classesWithStudents = await getTeacherClassesAndStudents(teacherId);
-        const classStudents = classesWithStudents.find(c => c.id === classId)?.students || [];
-        setStudents(classStudents);
-        const initialAttendance = classStudents.reduce((acc, student) => {
-            acc[student.id] = 'present';
-            return acc;
-        }, {} as Record<string, AttendanceStatus>);
-        setAttendance(initialAttendance);
-    } catch (error) {
-        toast({ variant: 'destructive', title: 'خطأ', description: 'فشل تحميل طلاب الصف.' });
-    } finally {
-        setLoading(false);
+  const handleClassChange = (classId: string) => {
+    setSelectedClassId(classId);
+    const classData = teacherClasses.find(c => c.id === classId);
+    const classStudents = classData?.students || [];
+    setStudents(classStudents);
+    
+    // We assume the loaded attendance is for all of the teacher's students for the day
+    // So we just need to re-initialize for the new set of students
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      getAttendanceForDate(userId, today).then(savedAttendance => {
+        initializeAttendance(classStudents, savedAttendance);
+      });
     }
   }
 
@@ -107,7 +118,7 @@ export default function AttendanceTracker() {
     try {
       const recordsToSave = Object.entries(attendance).map(([studentId, status]) => ({
         studentId,
-        classId: selectedClass,
+        classId: selectedClassId,
         status,
       }));
       
@@ -115,7 +126,7 @@ export default function AttendanceTracker() {
 
       toast({
           title: "تم حفظ الحضور",
-          description: `تم تسجيل الحضور والغياب لصف ${teacherClasses.find(c=> c.id === selectedClass)?.name}.`,
+          description: `تم تسجيل الحضور والغياب لصف ${teacherClasses.find(c=> c.id === selectedClassId)?.name}.`,
       });
     } catch(e) {
       toast({
@@ -137,7 +148,7 @@ export default function AttendanceTracker() {
         </CardDescription>
         <div className="pt-4">
           <Label htmlFor="class-select">اختر الصف</Label>
-          <Select value={selectedClass} onValueChange={handleClassChange} disabled={loading}>
+          <Select value={selectedClassId} onValueChange={handleClassChange} disabled={loading}>
             <SelectTrigger id="class-select" className="w-full md:w-[300px]">
               <SelectValue placeholder="اختر صفًا" />
             </SelectTrigger>

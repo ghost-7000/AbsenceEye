@@ -1,13 +1,19 @@
 'use server'
 
 import dbConnect from "@/lib/mongodb";
-import { ClassModel, StudentModel, AttendanceRecordModel } from "@/lib/models";
-import type { Class, Student } from "@/lib/types";
+import { ClassModel, StudentModel, AttendanceRecordModel, UserModel } from "@/lib/models";
+import type { Class, Student, User } from "@/lib/types";
 import { revalidatePath } from "next/cache";
 import { format } from "date-fns";
 
 // This is a helper type for the client component
 export type ClassWithStudents = Class & { students: Student[] };
+
+export async function getTeacherData(teacherId: string) {
+    const user = await UserModel.findById(teacherId).lean();
+    if (!user) throw new Error('Teacher not found');
+    return JSON.parse(JSON.stringify(user)) as User;
+}
 
 export async function getTeacherClassesAndStudents(teacherId: string): Promise<ClassWithStudents[]> {
     await dbConnect();
@@ -16,7 +22,7 @@ export async function getTeacherClassesAndStudents(teacherId: string): Promise<C
     const classesWithStudents: ClassWithStudents[] = [];
 
     for (const cls of classes) {
-        const students = await StudentModel.find({ classId: cls._id.toString() }).lean();
+        const students = await StudentModel.find({ classId: cls._id.toString() }).sort({ name: 1 }).lean();
         classesWithStudents.push({
             ...cls,
             id: cls._id.toString(),
@@ -24,7 +30,7 @@ export async function getTeacherClassesAndStudents(teacherId: string): Promise<C
         });
     }
     
-    return classesWithStudents;
+    return JSON.parse(JSON.stringify(classesWithStudents));
 }
 
 export async function addClass(name: string, teacherId: string) {
@@ -36,7 +42,10 @@ export async function addClass(name: string, teacherId: string) {
 
 export async function addStudent(name: string, classId: string) {
     await dbConnect();
-    const newStudent = new StudentModel({ name, classId, avatarUrl: '' });
+    // For demo, generating a random avatar
+    const randomSeed = Math.floor(Math.random() * 1000);
+    const avatarUrl = `https://picsum.photos/seed/${randomSeed}/200/200`;
+    const newStudent = new StudentModel({ name, classId, avatarUrl });
     await newStudent.save();
     revalidatePath('/teacher/classes');
 }
@@ -83,4 +92,18 @@ export async function saveAttendance(records: AttendanceData[]) {
         await AttendanceRecordModel.bulkWrite(operations);
     }
     revalidatePath('/teacher/attendance');
+    revalidatePath('/teacher/dashboard');
+}
+
+export async function getAttendanceForDate(teacherId: string, date: string) {
+    await dbConnect();
+    const teacherClasses = await ClassModel.find({ teacherId }).select('_id');
+    const classIds = teacherClasses.map(c => c._id.toString());
+    
+    const attendance = await AttendanceRecordModel.find({ 
+        classId: { $in: classIds },
+        date: date 
+    }).lean();
+
+    return JSON.parse(JSON.stringify(attendance));
 }

@@ -4,28 +4,33 @@ import type { User, Class, Student, AttendanceRecord } from './types';
 const UserSchema = new Schema<User>({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
+    password: { type: String, required: true }, // Added password field
     role: { type: String, enum: ['admin', 'teacher'], required: true },
     avatarUrl: { type: String },
 });
 
 const ClassSchema = new Schema<Class>({
     name: { type: String, required: true },
-    teacherId: { type: String, required: true },
+    teacherId: { type: String, required: true }, // Changed to String to match User _id type after stringification
     note: { type: String },
 });
 
 const StudentSchema = new Schema<Student>({
     name: { type: String, required: true },
-    classId: { type: String, required: true },
+    classId: { type: String, required: true }, // Changed to String
     avatarUrl: { type: String },
 });
 
 const AttendanceRecordSchema = new Schema<AttendanceRecord>({
-    studentId: { type: String, required: true },
-    classId: { type: String, required: true },
-    date: { type: String, required: true },
+    studentId: { type: String, required: true }, // Changed to String
+    classId: { type: String, required: true }, // Changed to String
+    date: { type: String, required: true }, // Format: YYYY-MM-DD
     status: { type: String, enum: ['present', 'absent'], required: true },
 });
+
+// Index for faster queries on attendance
+AttendanceRecordSchema.index({ studentId: 1, date: 1 }, { unique: true });
+AttendanceRecordSchema.index({ classId: 1, date: 1 });
 
 
 export const UserModel = models.User || model<User>('User', UserSchema);
