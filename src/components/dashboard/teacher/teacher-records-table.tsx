@@ -25,7 +25,7 @@ import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 
 export default function TeacherRecordsTable() {
-  const [records, setRecords] = React.useState<DetailedAttendanceRecord[]>([]);
+  const [allRecords, setAllRecords] = React.useState<DetailedAttendanceRecord[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [filterDate, setFilterDate] = React.useState(format(new Date(), 'yyyy-MM-dd'));
@@ -41,7 +41,7 @@ export default function TeacherRecordsTable() {
       }
       try {
         const data = await getDetailedAttendanceForTeacher(teacherId);
-        setRecords(data);
+        setAllRecords(data);
       } catch (error) {
         console.error("Failed to fetch attendance records", error);
       } finally {
@@ -51,13 +51,14 @@ export default function TeacherRecordsTable() {
     fetchRecords();
   }, []);
 
-  const filteredRecords = records.filter(record => {
-    const recordDate = format(new Date(record.date), 'yyyy-MM-dd');
-    const matchesDate = recordDate === filterDate;
+  const filteredRecords = loading ? [] : allRecords.filter(record => {
+    const matchesDate = record.date === filterDate;
+    if (!matchesDate) return false;
+
     const matchesSearch = searchTerm === '' || 
                           record.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           record.className.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesDate && matchesSearch;
+    return matchesSearch;
   });
 
   return (
