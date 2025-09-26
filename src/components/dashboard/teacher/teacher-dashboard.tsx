@@ -6,37 +6,7 @@ import { BookOpen, Users, UserCheck, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import dbConnect from '@/lib/mongodb';
-import { ClassModel, StudentModel, AttendanceRecordModel } from '@/lib/models';
-
-
-async function getTeacherStats(teacherId: string) {
-    await dbConnect();
-    
-    const classCount = await ClassModel.countDocuments({ teacherId: teacherId });
-    
-    const teacherClasses = await ClassModel.find({ teacherId: teacherId }).select('_id');
-    const classIds = teacherClasses.map(c => c._id);
-
-    const studentCount = await StudentModel.countDocuments({ classId: { $in: classIds } });
-    
-    let attendancePercentage = 0;
-    if (studentCount > 0) {
-        const today = format(new Date(), 'yyyy-MM-dd');
-        const students = await StudentModel.find({ classId: { $in: classIds } }).select('_id');
-        const studentIds = students.map(s => s._id.toString());
-        
-        const presentCount = await AttendanceRecordModel.countDocuments({
-            studentId: { $in: studentIds },
-            date: today,
-            status: 'present'
-        });
-        attendancePercentage = Math.round((presentCount / studentCount) * 100);
-    }
-
-    return { classCount, studentCount, attendancePercentage };
-}
-
+import { getTeacherStats } from '@/app/actions/teacher-actions';
 
 interface TeacherDashboardStats {
   classCount: number;
@@ -58,8 +28,13 @@ export default function TeacherDashboard() {
       setLoading(true);
       const teacherId = localStorage.getItem('userId');
       if (teacherId) {
-        const fetchedStats = await getTeacherStats(teacherId);
-        setStats(fetchedStats);
+        try {
+          const fetchedStats = await getTeacherStats(teacherId);
+          setStats(fetchedStats);
+        } catch (error) {
+          console.error("Failed to fetch teacher stats:", error);
+          setStats({ classCount: 0, studentCount: 0, attendancePercentage: 0 });
+        }
       }
       setLoading(false);
     }

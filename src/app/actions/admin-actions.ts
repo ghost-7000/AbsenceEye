@@ -89,3 +89,11 @@ export async function deleteTeacher(teacherId: string) {
     revalidatePath('/admin/teachers');
     revalidatePath('/admin/dashboard');
 }
+
+export async function getAdminStats() {
+    await dbConnect();
+    const totalTeachers = await UserModel.countDocuments({ role: 'teacher' });
+    const totalClasses = await ClassModel.countDocuments();
+    const totalStudents = await StudentModel.countDocuments();
+    return { totalTeachers, totalClasses, totalStudents };
+}

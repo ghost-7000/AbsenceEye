@@ -74,7 +74,7 @@ export default function MostAbsentStudents() {
                       <div className="flex items-center gap-3">
                         <Avatar className="h-9 w-9">
                           <AvatarImage src={student.avatarUrl || undefined} alt={student.name} />
-                          <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
+                          <AvatarFallback>{student.name.charAt(0)}</Fallback>
                         </Avatar>
                         <div className="font-medium">{student.name}</div>
                       </div>

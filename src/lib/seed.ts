@@ -92,7 +92,7 @@ export async function seedDatabase() {
             const status = Math.random() > 0.15 ? 'present' : 'absent';
             attendanceRecords.push({
                 studentId: student._id.toString(),
-                classId: student.classId.toString(),
+                classId: student.classId,
                 date: date,
                 status: status
             });

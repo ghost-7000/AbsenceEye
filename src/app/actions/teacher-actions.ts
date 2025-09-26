@@ -107,3 +107,29 @@ export async function getAttendanceForDate(teacherId: string, date: string) {
 
     return JSON.parse(JSON.stringify(attendance));
 }
+
+
+export async function getTeacherStats(teacherId: string) {
+    await dbConnect();
+    
+    const classCount = await ClassModel.countDocuments({ teacherId: teacherId });
+    
+    const teacherClasses = await ClassModel.find({ teacherId: teacherId }).select('_id');
+    const classIds = teacherClasses.map(c => c._id);
+
+    const studentCount = await StudentModel.countDocuments({ classId: { $in: classIds } });
+    
+    let attendancePercentage = 0;
+    if (studentCount > 0) {
+        const today = format(new Date(), 'yyyy-MM-dd');
+        
+        const presentCount = await AttendanceRecordModel.countDocuments({
+            classId: { $in: classIds },
+            date: today,
+            status: 'present'
+        });
+        attendancePercentage = Math.round((presentCount / studentCount) * 100);
+    }
+
+    return { classCount, studentCount, attendancePercentage };
+}
