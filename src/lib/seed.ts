@@ -33,16 +33,17 @@ async function ensureAdminAndTeacherExist() {
 // This function will be called once when the database connection is established.
 export async function seedDatabase() {
   try {
+    
+    // Always ensure default users exist, this is cheap.
+    await ensureAdminAndTeacherExist();
+
     const studentCount = await StudentModel.countDocuments();
     if (studentCount > 0) {
-        console.log('Database appears to be seeded already.');
-        await ensureAdminAndTeacherExist(); // Still ensure default users exist
+        console.log('Database appears to be seeded already with students.');
         return;
     }
     
     console.log('Database is empty, seeding with initial data...');
-
-    await ensureAdminAndTeacherExist();
 
     const teacher = await UserModel.findOne({ email: 'teacher@example.com' });
     if (!teacher) {
