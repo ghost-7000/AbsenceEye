@@ -53,22 +53,22 @@ export default function MostAbsentStudents() {
         <CardDescription>قائمة بالطلاب الأكثر غيابًا.</CardDescription>
       </CardHeader>
       <CardContent>
-         {loading ? (
+        {loading ? (
           <div className="flex justify-center items-center h-48">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>الطالب</TableHead>
-              <TableHead>الصف</TableHead>
-              <TableHead className="text-center">أيام الغياب</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {mostAbsent.length > 0 ? (
-              mostAbsent.map(student => (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>الطالب</TableHead>
+                <TableHead>الصف</TableHead>
+                <TableHead className="text-center">أيام الغياب</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {mostAbsent.length > 0 ? (
+                mostAbsent.map((student) => (
                   <TableRow key={student.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -81,19 +81,19 @@ export default function MostAbsentStudents() {
                     </TableCell>
                     <TableCell>{student.className}</TableCell>
                     <TableCell className="text-center">
-                        <Badge variant="destructive">{student.absences}</Badge>
+                      <Badge variant="destructive">{student.absences}</Badge>
                     </TableCell>
                   </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={3} className="h-24 text-center">
-                  لا يوجد طلاب غائبون.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={3} className="h-24 text-center">
+                    لا يوجد طلاب غائبون.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         )}
       </CardContent>
     </Card>
