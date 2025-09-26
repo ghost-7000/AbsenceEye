@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/sidebar';
 import { MainHeader } from '@/components/shared/main-header';
 import Link from 'next/link';
-import { GraduationCap, LayoutDashboard, Users, School, Settings, BarChart3, PanelLeft } from 'lucide-react';
+import { GraduationCap, LayoutDashboard, Users, School, Settings, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function AdminDashboardLayout({
@@ -39,7 +39,7 @@ export default function AdminDashboardLayout({
             <SidebarContent>
               <SidebarMenu className="p-2">
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="لوحة التحكم">
+                  <SidebarMenuButton asChild tooltip="لوحة التحكم" href="/admin/dashboard">
                     <Link href="/admin/dashboard">
                       <LayoutDashboard />
                       <span>لوحة التحكم</span>
@@ -47,7 +47,7 @@ export default function AdminDashboardLayout({
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="إدارة المعلمات">
+                  <SidebarMenuButton asChild tooltip="إدارة المعلمات" href="/admin/teachers">
                     <Link href="/admin/teachers">
                       <Users />
                       <span>المعلمات</span>
@@ -55,7 +55,7 @@ export default function AdminDashboardLayout({
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="إدارة الصفوف">
+                  <SidebarMenuButton asChild tooltip="إدارة الصفوف" href="/admin/classes">
                     <Link href="/admin/classes">
                       <School />
                       <span>الصفوف</span>
@@ -63,7 +63,7 @@ export default function AdminDashboardLayout({
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="ملخص الحضور">
+                  <SidebarMenuButton asChild tooltip="ملخص الحضور" href="/admin/attendance">
                     <Link href="/admin/attendance">
                       <BarChart3 />
                       <span>ملخص الحضور</span>
@@ -75,7 +75,7 @@ export default function AdminDashboardLayout({
             <SidebarFooter className="p-2">
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="الإعدادات">
+                  <SidebarMenuButton asChild tooltip="الإعدادات" href="/admin/settings">
                     <Link href="/admin/settings">
                       <Settings />
                       <span>الإعدادات</span>
@@ -86,7 +86,7 @@ export default function AdminDashboardLayout({
             </SidebarFooter>
           </Sidebar>
           <div className="flex flex-1 flex-col">
-            <MainHeader title="لوحة تحكم المديرة" />
+            <MainHeader />
             <main className="flex-1 p-4 sm:p-6 bg-background">{children}</main>
           </div>
         </div>

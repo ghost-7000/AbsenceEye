@@ -69,7 +69,7 @@ export default function TeacherDashboardLayout({
               <SidebarFooter className="p-2">
                 <SidebarMenu>
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip="الإعدادات">
+                    <SidebarMenuButton asChild tooltip="الإعدادات" href="/teacher/settings">
                       <Link href="/teacher/settings">
                         <Settings />
                         <span>الإعدادات</span>
@@ -80,7 +80,7 @@ export default function TeacherDashboardLayout({
               </SidebarFooter>
             </Sidebar>
             <div className="flex flex-1 flex-col">
-              <MainHeader title="لوحة تحكم المعلمة" />
+              <MainHeader />
               <main className="flex-1 p-4 sm:p-6 bg-secondary/50">{children}</main>
             </div>
           </div>
