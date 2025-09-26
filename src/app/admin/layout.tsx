@@ -20,19 +20,19 @@ export default function AdminDashboardLayout({
 }) {
   return (
     <SidebarProvider>
-       <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-screen flex-col">
         <div className="flex flex-1">
           <Sidebar side="right">
-            <SidebarHeader className="p-2">
+            <SidebarHeader className="border-b p-2">
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" className="h-12 w-12 text-sidebar-primary" asChild>
+                <Button variant="ghost" size="icon" className="h-12 w-12 text-primary" asChild>
                   <Link href="/admin/dashboard">
                     <GraduationCap className="h-7 w-7" />
                   </Link>
                 </Button>
                 <div className="flex flex-col group-data-[collapsible=icon]:group-data-[state=collapsed]:hidden">
-                  <h2 className="font-headline text-lg font-semibold text-sidebar-foreground">AbsenceEye</h2>
-                  <p className="text-xs text-sidebar-foreground/80">لوحة تحكم المديرة</p>
+                  <h2 className="font-headline text-lg font-semibold">AbsenceEye</h2>
+                  <p className="text-xs text-muted-foreground">لوحة تحكم المديرة</p>
                 </div>
               </div>
             </SidebarHeader>
@@ -72,7 +72,7 @@ export default function AdminDashboardLayout({
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarContent>
-            <SidebarFooter className="p-2">
+            <SidebarFooter className="border-t p-2">
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="الإعدادات" href="/admin/settings">
@@ -87,7 +87,7 @@ export default function AdminDashboardLayout({
           </Sidebar>
           <div className="flex flex-1 flex-col">
             <MainHeader />
-            <main className="flex-1 p-4 sm:p-6 bg-background">{children}</main>
+            <main className="flex-1 p-4 sm:p-6 bg-secondary/50">{children}</main>
           </div>
         </div>
       </div>
