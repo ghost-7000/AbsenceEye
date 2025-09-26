@@ -67,7 +67,7 @@ export function LoginForm() {
         localStorage.setItem('userName', role === 'admin' ? 'المديرة' : 'المعلمة سارة');
         localStorage.setItem('userEmail', email);
 
-        router.push(role === 'admin' ? '/admin/dashboard' : '/teacher/dashboard');
+        router.replace(role === 'admin' ? '/admin/dashboard' : '/teacher/dashboard');
       } else {
         toast({
           variant: 'destructive',
