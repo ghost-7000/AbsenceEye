@@ -28,16 +28,13 @@ import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 
-import { students as allStudents, classes as allClasses } from '@/lib/data';
-import type { Student, Class, AttendanceStatus } from '@/lib/types';
+import type { Student, AttendanceStatus } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
+import { useClasses } from '@/context/class-context';
 
 export default function AttendanceTracker() {
-  const teacherId = '2'; // Mock teacher ID
-  const [teacherClasses] = React.useState<Class[]>(
-    allClasses.filter(c => c.teacherId === teacherId)
-  );
+  const { teacherClasses, getStudentsByClass } = useClasses();
   const [selectedClass, setSelectedClass] = React.useState<string>(teacherClasses[0]?.id || '');
   const [students, setStudents] = React.useState<Student[]>([]);
   const [attendance, setAttendance] = React.useState<Record<string, AttendanceStatus>>({});
@@ -45,7 +42,7 @@ export default function AttendanceTracker() {
 
   React.useEffect(() => {
     if (selectedClass) {
-      const classStudents = allStudents.filter(s => s.classId === selectedClass);
+      const classStudents = getStudentsByClass(selectedClass);
       setStudents(classStudents);
       // Initialize attendance state for the selected class
       const initialAttendance = classStudents.reduce((acc, student) => {
@@ -53,8 +50,21 @@ export default function AttendanceTracker() {
         return acc;
       }, {} as Record<string, AttendanceStatus>);
       setAttendance(initialAttendance);
+    } else {
+        setStudents([]);
+        setAttendance({});
     }
-  }, [selectedClass]);
+  }, [selectedClass, getStudentsByClass]);
+
+    // Update selectedClass if the classes list changes and the current selection is gone
+  React.useEffect(() => {
+    if (teacherClasses.length > 0 && !teacherClasses.find(c => c.id === selectedClass)) {
+      setSelectedClass(teacherClasses[0].id);
+    } else if (teacherClasses.length === 0) {
+      setSelectedClass('');
+    }
+  }, [teacherClasses, selectedClass]);
+
 
   const handleAttendanceChange = (studentId: string, isPresent: boolean) => {
     setAttendance(prev => ({
@@ -133,7 +143,7 @@ export default function AttendanceTracker() {
             ) : (
               <TableRow>
                 <TableCell colSpan={2} className="h-24 text-center">
-                  اختر صفًا لعرض الطلاب.
+                  {teacherClasses.length > 0 ? 'اختر صفًا لعرض الطلاب.' : 'لا توجد صفوف. الرجاء إنشاء صف جديد أولاً.'}
                 </TableCell>
               </TableRow>
             )}

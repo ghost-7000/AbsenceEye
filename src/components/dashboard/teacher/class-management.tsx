@@ -17,26 +17,19 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MoreHorizontal, PlusCircle, UserPlus, Trash2 } from 'lucide-react';
+import { PlusCircle, UserPlus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogDescription,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { useClasses } from '@/context/class-context';
 
-import { students as initialStudents, classes as initialClasses } from '@/lib/data';
-import type { Student, Class } from '@/lib/types';
+import type { Student } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -44,19 +37,12 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function ClassManagement() {
   const { toast } = useToast();
-  const teacherId = '2'; // Mock teacher ID
-  const [allClasses, setAllClasses] = React.useState<Class[]>(initialClasses);
-  const [allStudents, setAllStudents] = React.useState<Student[]>(initialStudents);
-
+  const { teacherClasses, getStudentsByClass, addClass, addStudent } = useClasses();
+  
   const [isAddClassOpen, setAddClassOpen] = React.useState(false);
   const [isAddStudentOpen, setAddStudentOpen] = React.useState(false);
   const [selectedClassForStudent, setSelectedClassForStudent] = React.useState<string>('');
 
-  const teacherClasses = allClasses.filter(c => c.teacherId === teacherId);
-
-  const getStudentsByClass = (classId: string) => {
-    return allStudents.filter(s => s.classId === classId);
-  };
   
   const handleAddClass = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -68,14 +54,7 @@ export default function ClassManagement() {
       toast({ variant: 'destructive', title: 'خطأ', description: 'الرجاء إدخال اسم الصف.' });
       return;
     }
-
-    const newClass: Class = {
-      id: `c${Date.now()}`,
-      name,
-      teacherId: teacherId,
-    };
-
-    setAllClasses(prev => [...prev, newClass]);
+    addClass(name);
     toast({ title: 'نجاح', description: `تم إنشاء صف "${name}" بنجاح.` });
     setAddClassOpen(false);
     form.reset();
@@ -91,16 +70,9 @@ export default function ClassManagement() {
       toast({ variant: 'destructive', title: 'خطأ', description: 'الرجاء إدخال اسم الطالب واختيار الصف.' });
       return;
     }
-
-    const newStudent: Student = {
-      id: `s${Date.now()}`,
-      name,
-      classId: selectedClassForStudent,
-      avatarUrl: '',
-    };
-
-    setAllStudents(prev => [...prev, newStudent]);
-    const className = allClasses.find(c => c.id === selectedClassForStudent)?.name;
+    
+    addStudent(name, selectedClassForStudent);
+    const className = teacherClasses.find(c => c.id === selectedClassForStudent)?.name;
     toast({ title: 'نجاح', description: `تمت إضافة الطالب "${name}" إلى صف ${className}.` });
     setAddStudentOpen(false);
     form.reset();
@@ -141,9 +113,10 @@ export default function ClassManagement() {
         </div>
       </CardHeader>
       <CardContent>
+        {teacherClasses.length > 0 ? (
         <Accordion type="single" collapsible className="w-full" defaultValue={teacherClasses[0]?.id}>
           {teacherClasses.map(c => {
-            const students = getStudentsByClass(c.id);
+            const students: Student[] = getStudentsByClass(c.id);
             return (
               <AccordionItem value={c.id} key={c.id}>
                 <AccordionTrigger className="hover:no-underline">
@@ -207,6 +180,13 @@ export default function ClassManagement() {
                             </TableCell>
                           </TableRow>
                         ))}
+                         {students.length === 0 && (
+                            <TableRow>
+                                <TableCell colSpan={2} className="h-24 text-center">
+                                لا يوجد طلاب في هذا الصف.
+                                </TableCell>
+                            </TableRow>
+                         )}
                       </TableBody>
                     </Table>
                   </div>
@@ -215,6 +195,14 @@ export default function ClassManagement() {
             );
           })}
         </Accordion>
+        ) : (
+             <div className="flex flex-col items-center justify-center rounded-md border border-dashed p-12 text-center">
+                <h3 className="text-lg font-medium">لا توجد صفوف دراسية</h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                    ابدأ بإنشاء صف جديد لإضافة الطلاب وإدارة الحضور.
+                </p>
+             </div>
+        )}
       </CardContent>
     </Card>
   );
