@@ -78,7 +78,7 @@ export default function TeacherDashboardLayout({
               </SidebarMenu>
             </SidebarFooter>
           </Sidebar>
-          <main className="flex-1 p-4 sm:p-6">{children}</main>
+          <main className="flex-1 p-4 sm:p-6 bg-secondary/50">{children}</main>
         </div>
       </div>
     </SidebarProvider>

@@ -25,6 +25,9 @@ export default function TeacherDashboard() {
 
   const Overview = () => (
     <div className="grid gap-6">
+        <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold md:text-3xl">نظرة عامة</h1>
+        </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <StatsCard 
                 title="صفوفي"
@@ -45,31 +48,26 @@ export default function TeacherDashboard() {
                 description="نسبة حضور الطلاب اليوم (مثال)"
             />
         </div>
+        <ClassManagement />
         <AttendanceTracker />
     </div>
   )
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-3">
+      <TabsList className="grid w-full grid-cols-3 mb-6">
         <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
         <TabsTrigger value="attendance">تسجيل الحضور</TabsTrigger>
         <TabsTrigger value="classes">إدارة الصفوف</TabsTrigger>
       </TabsList>
        <TabsContent value="overview">
-        <div className="py-6">
             <Overview />
-        </div>
       </TabsContent>
       <TabsContent value="attendance">
-        <div className="py-6">
             <AttendanceTracker />
-        </div>
       </TabsContent>
       <TabsContent value="classes">
-        <div className="py-6">
             <ClassManagement />
-        </div>
       </TabsContent>
     </Tabs>
   );
