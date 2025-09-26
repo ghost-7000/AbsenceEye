@@ -116,10 +116,12 @@ export function AttendanceTracker() {
   const handleSaveAttendance = async () => {
     setIsSaving(true);
     try {
-      const recordsToSave = Object.entries(attendance).map(([studentId, status]) => ({
-        studentId,
-        classId: selectedClassId,
-        status,
+      const recordsToSave = Object.entries(attendance)
+        .filter(([studentId]) => students.some(s => s.id === studentId))
+        .map(([studentId, status]) => ({
+            studentId,
+            classId: selectedClassId,
+            status,
       }));
       
       await saveAttendance(recordsToSave);
