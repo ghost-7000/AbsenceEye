@@ -5,27 +5,71 @@ import ClassManagement from './class-management';
 import AttendanceTracker from './attendance-tracker';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { StatsCard } from '../stats-card';
+import { BookOpen, Users, UserCheck } from 'lucide-react';
+import { classes, students } from '@/lib/data';
 
 export default function TeacherDashboard() {
   const searchParams = useSearchParams();
-  const tab = searchParams.get('tab') || 'attendance';
+  const tab = searchParams.get('tab') || 'overview';
   const [activeTab, setActiveTab] = useState(tab);
+
+  const teacherId = '2';
+  const teacherClasses = classes.filter(c => c.teacherId === teacherId);
+  const teacherStudents = students.filter(s => teacherClasses.some(tc => tc.id === s.classId));
+
 
   useEffect(() => {
     setActiveTab(tab);
   }, [tab]);
 
+  const Overview = () => (
+    <div className="grid gap-6">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <StatsCard 
+                title="صفوفي"
+                value={teacherClasses.length.toString()}
+                icon={BookOpen}
+                description="إجمالي عدد الصفوف المسندة إليك"
+            />
+             <StatsCard 
+                title="طلابي"
+                value={teacherStudents.length.toString()}
+                icon={Users}
+                description="إجمالي عدد الطلاب في صفوفك"
+            />
+             <StatsCard 
+                title="نسبة الحضور اليوم"
+                value="95%"
+                icon={UserCheck}
+                description="نسبة حضور الطلاب اليوم (مثال)"
+            />
+        </div>
+        <AttendanceTracker />
+    </div>
+  )
+
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-2">
+      <TabsList className="grid w-full grid-cols-3">
+        <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
         <TabsTrigger value="attendance">تسجيل الحضور</TabsTrigger>
         <TabsTrigger value="classes">إدارة الصفوف</TabsTrigger>
       </TabsList>
+       <TabsContent value="overview">
+        <div className="py-6">
+            <Overview />
+        </div>
+      </TabsContent>
       <TabsContent value="attendance">
-        <AttendanceTracker />
+        <div className="py-6">
+            <AttendanceTracker />
+        </div>
       </TabsContent>
       <TabsContent value="classes">
-        <ClassManagement />
+        <div className="py-6">
+            <ClassManagement />
+        </div>
       </TabsContent>
     </Tabs>
   );

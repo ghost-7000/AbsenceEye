@@ -35,22 +35,17 @@ export default function AdminDashboard() {
           description="عدد الطلاب المسجلين"
         />
       </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-         <AttendanceSummary />
-         <MostAbsentStudents />
+      
+      <div className="grid gap-6 lg:grid-cols-5">
+         <div className="lg:col-span-3">
+            <AttendanceSummary />
+         </div>
+         <div className="lg:col-span-2">
+            <MostAbsentStudents />
+         </div>
       </div>
 
       <div>
-        <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-semibold">نظرة سريعة على المعلمات</h2>
-            <Button asChild variant="outline" size="sm">
-                <Link href="/admin/teachers">
-                    <span>عرض الكل</span>
-                    <ArrowLeft className="h-4 w-4" />
-                </Link>
-            </Button>
-        </div>
         <TeacherManagement />
       </div>
     </div>
