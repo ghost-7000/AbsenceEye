@@ -37,7 +37,7 @@ async function dbConnect() {
 
     console.log("Creating new DB connection promise");
     cached.promise = mongoose.connect(MONGODB_URI!, opts).then(async (mongoose) => {
-      console.log("DB Connected. Seeding database...");
+      console.log("DB Connected. Seeding database if necessary...");
       // Seed the database right after connection
       await seedDatabase();
       console.log("Seeding complete.");
