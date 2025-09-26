@@ -80,8 +80,8 @@ export async function saveAttendance(records: AttendanceData[]) {
 
     const operations = records.map(record => ({
         updateOne: {
-            filter: { studentId: record.studentId, date: date },
-            update: { $set: { ...record, date } },
+            filter: { studentId: record.studentId, classId: record.classId, date: date },
+            update: { $set: { status: record.status, studentId: record.studentId, classId: record.classId, date } },
             upsert: true,
         }
     }));
