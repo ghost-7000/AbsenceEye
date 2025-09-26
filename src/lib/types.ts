@@ -1,4 +1,7 @@
+import type { Types } from 'mongoose';
+
 export type User = {
+  _id: Types.ObjectId;
   id: string;
   name: string;
   email: string;
@@ -7,6 +10,7 @@ export type User = {
 };
 
 export type Class = {
+  _id: Types.ObjectId;
   id: string;
   name: string;
   teacherId: string;
@@ -14,6 +18,7 @@ export type Class = {
 };
 
 export type Student = {
+  _id: Types.ObjectId;
   id: string;
   name: string;
   classId: string;
@@ -23,6 +28,7 @@ export type Student = {
 export type AttendanceStatus = 'present' | 'absent';
 
 export type AttendanceRecord = {
+  _id: Types.ObjectId;
   id: string;
   studentId: string;
   classId: string;
