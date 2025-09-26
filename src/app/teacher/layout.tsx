@@ -6,7 +6,6 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarInset,
   SidebarFooter,
 } from '@/components/ui/sidebar';
 import { MainHeader } from '@/components/shared/main-header';
@@ -21,64 +20,64 @@ export default function TeacherDashboardLayout({
 }) {
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen">
-        <Sidebar collapsible="icon" side="right">
-          <SidebarHeader>
-            <div className="flex items-center gap-2 p-2">
-              <Button variant="ghost" size="icon" className="h-10 w-10 text-sidebar-primary" asChild>
-                <Link href="/teacher/dashboard">
-                  <GraduationCap className="h-6 w-6" />
-                </Link>
-              </Button>
-              <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-                <h2 className="font-headline text-lg font-semibold text-sidebar-foreground">AbsenceEye</h2>
-                <p className="text-xs text-sidebar-foreground/80">لوحة تحكم المعلمة</p>
-              </div>
-            </div>
-          </SidebarHeader>
-          <SidebarContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="لوحة التحكم">
+      <div className="flex min-h-screen flex-col">
+        <MainHeader title="لوحة تحكم المعلمة" />
+        <div className="flex flex-1">
+          <Sidebar side="right" collapsible="icon">
+            <SidebarHeader>
+              <div className="flex items-center gap-2 p-2">
+                <Button variant="ghost" size="icon" className="h-10 w-10 text-sidebar-primary" asChild>
                   <Link href="/teacher/dashboard">
-                    <LayoutDashboard />
-                    <span>لوحة التحكم</span>
+                    <GraduationCap className="h-6 w-6" />
                   </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="صفوفي">
-                  <Link href="/teacher/dashboard?tab=classes">
-                    <BookOpen />
-                    <span>صفوفي</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="تسجيل الحضور">
-                   <Link href="/teacher/dashboard?tab=attendance">
-                    <Users />
-                    <span>تسجيل الحضور</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarContent>
-           <SidebarFooter>
-             <SidebarMenu>
+                </Button>
+                <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+                  <h2 className="font-headline text-lg font-semibold text-sidebar-foreground">AbsenceEye</h2>
+                  <p className="text-xs text-sidebar-foreground/80">لوحة تحكم المعلمة</p>
+                </div>
+              </div>
+            </SidebarHeader>
+            <SidebarContent>
+              <SidebarMenu>
                 <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip="الإعدادات">
-                        <Link href="/teacher/settings">
-                            <Settings />
-                            <span>الإعدادات</span>
-                        </Link>
-                    </SidebarMenuButton>
+                  <SidebarMenuButton asChild tooltip="لوحة التحكم">
+                    <Link href="/teacher/dashboard">
+                      <LayoutDashboard />
+                      <span>لوحة التحكم</span>
+                    </Link>
+                  </SidebarMenuButton>
                 </SidebarMenuItem>
-             </SidebarMenu>
-          </SidebarFooter>
-        </Sidebar>
-        <div className="flex flex-1 flex-col">
-          <MainHeader title="لوحة تحكم المعلمة" />
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="صفوفي">
+                    <Link href="/teacher/dashboard?tab=classes">
+                      <BookOpen />
+                      <span>صفوفي</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="تسجيل الحضور">
+                    <Link href="/teacher/dashboard?tab=attendance">
+                      <Users />
+                      <span>تسجيل الحضور</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarContent>
+            <SidebarFooter>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="الإعدادات">
+                    <Link href="/teacher/settings">
+                      <Settings />
+                      <span>الإعدادات</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarFooter>
+          </Sidebar>
           <main className="flex-1 p-4 sm:p-6">{children}</main>
         </div>
       </div>

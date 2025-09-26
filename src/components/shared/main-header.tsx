@@ -3,6 +3,8 @@ import { ThemeToggle } from "./theme-toggle";
 import { UserNav } from "./user-nav";
 import { Button } from "../ui/button";
 import { PanelRightOpen } from "lucide-react";
+import Link from "next/link";
+import { GraduationCap } from "lucide-react";
 
 interface MainHeaderProps {
     title: string;
@@ -10,16 +12,20 @@ interface MainHeaderProps {
 
 export function MainHeader({ title }: MainHeaderProps) {
     return (
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:px-6">
-            <div className="flex flex-1 items-center justify-end gap-2">
+        <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-4 border-b bg-background px-4 sm:px-6">
+            <div className="flex items-center gap-2">
+                <SidebarTrigger className="md:hidden" />
+                 <Link href="/" className="flex items-center gap-2 font-semibold">
+                    <GraduationCap className="h-6 w-6 text-primary" />
+                    <span className="font-headline text-lg tracking-tight">AbsenceEye</span>
+                </Link>
+            </div>
+
+            <div className="flex items-center gap-4">
                 <ThemeToggle />
                 <UserNav />
+                 <SidebarTrigger className="hidden md:flex" />
             </div>
-             <SidebarTrigger asChild>
-                <Button variant="ghost" size="icon">
-                    <PanelRightOpen />
-                </Button>
-            </SidebarTrigger>
         </header>
     )
 }
