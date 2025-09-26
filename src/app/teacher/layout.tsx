@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/sidebar';
 import { MainHeader } from '@/components/shared/main-header';
 import Link from 'next/link';
-import { LayoutDashboard, Users, BookOpen, Settings } from 'lucide-react';
+import { LayoutDashboard, Users, BookOpen, Settings, GraduationCap } from 'lucide-react';
 import { ClassProvider } from '@/context/class-context';
 
 export default function TeacherDashboardLayout({
@@ -25,10 +25,9 @@ export default function TeacherDashboardLayout({
           <div className="flex flex-1">
             <Sidebar side="right">
               <SidebarHeader className="border-b p-4 flex items-center justify-center">
-                  <div className="flex flex-col items-center text-center group-data-[collapsible=icon]:group-data-[state=collapsed]:hidden">
-                    <h2 className="font-headline text-lg font-semibold">AbsenceEye</h2>
-                    <p className="text-xs text-muted-foreground">لوحة تحكم المعلمة</p>
-                  </div>
+                  <Link href="/teacher/dashboard">
+                      <GraduationCap className="h-8 w-8 text-primary group-data-[collapsible=icon]:group-data-[state=collapsed]:h-6 group-data-[collapsible=icon]:group-data-[state=collapsed]:w-6 transition-all" />
+                  </Link>
               </SidebarHeader>
               <SidebarContent>
                 <SidebarMenu className="p-2">

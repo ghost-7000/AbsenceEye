@@ -11,6 +11,9 @@ interface ClassContextType {
   getStudentsByClass: (classId: string) => Student[];
   addClass: (name: string) => void;
   addStudent: (name: string, classId: string) => void;
+  deleteStudent: (studentId: string, classId: string) => void;
+  updateClassNote: (classId: string, note: string) => void;
+  updateClassName: (classId: string, name: string) => void;
 }
 
 const ClassContext = createContext<ClassContextType | undefined>(undefined);
@@ -32,6 +35,7 @@ export function ClassProvider({ children }: { children: ReactNode }) {
       id: `c${Date.now()}`,
       name,
       teacherId: teacherId,
+      note: '',
     };
     setAllClasses(prev => [...prev, newClass]);
   };
@@ -46,13 +50,29 @@ export function ClassProvider({ children }: { children: ReactNode }) {
     setAllStudents(prev => [...prev, newStudent]);
   };
 
+  const deleteStudent = (studentId: string, classId: string) => {
+    // This is a simple implementation. In a real app, you might want to confirm the classId matches.
+    setAllStudents(prev => prev.filter(s => s.id !== studentId));
+  };
+  
+  const updateClassName = (classId: string, name: string) => {
+    setAllClasses(prev => prev.map(c => c.id === classId ? { ...c, name } : c));
+  }
+
+  const updateClassNote = (classId: string, note: string) => {
+    setAllClasses(prev => prev.map(c => c.id === classId ? { ...c, note } : c));
+  }
+
   const value = {
     teacherClasses,
     allStudents,
     teacherStudents,
     getStudentsByClass,
     addClass,
-    addStudent
+    addStudent,
+    deleteStudent,
+    updateClassNote,
+    updateClassName
   };
 
   return (

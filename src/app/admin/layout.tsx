@@ -23,10 +23,9 @@ export default function AdminDashboardLayout({
         <div className="flex flex-1">
           <Sidebar side="right">
             <SidebarHeader className="border-b p-4 flex items-center justify-center">
-                <div className="flex flex-col items-center text-center group-data-[collapsible=icon]:group-data-[state=collapsed]:hidden">
-                  <h2 className="font-headline text-lg font-semibold">AbsenceEye</h2>
-                  <p className="text-xs text-muted-foreground">لوحة تحكم المديرة</p>
-                </div>
+                <Link href="/admin/dashboard">
+                    <GraduationCap className="h-8 w-8 text-primary group-data-[collapsible=icon]:group-data-[state=collapsed]:h-6 group-data-[collapsible=icon]:group-data-[state=collapsed]:w-6 transition-all" />
+                </Link>
             </SidebarHeader>
             <SidebarContent>
               <SidebarMenu className="p-2">

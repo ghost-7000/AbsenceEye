@@ -10,6 +10,7 @@ export type Class = {
   id: string;
   name: string;
   teacherId: string;
+  note?: string;
 };
 
 export type Student = {
