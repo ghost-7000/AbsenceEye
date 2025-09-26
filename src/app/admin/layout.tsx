@@ -21,24 +21,23 @@ export default function AdminDashboardLayout({
   return (
     <SidebarProvider>
        <div className="flex min-h-screen flex-col">
-        <MainHeader title="لوحة تحكم المديرة" />
         <div className="flex flex-1">
-          <Sidebar side="right" collapsible="icon">
-            <SidebarHeader>
-              <div className="flex items-center gap-2 p-2">
-                <Button variant="ghost" size="icon" className="h-10 w-10 text-sidebar-primary" asChild>
+          <Sidebar side="right">
+            <SidebarHeader className="p-2">
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" className="h-12 w-12 text-sidebar-primary" asChild>
                   <Link href="/admin/dashboard">
-                    <GraduationCap className="h-6 w-6" />
+                    <GraduationCap className="h-7 w-7" />
                   </Link>
                 </Button>
-                <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+                <div className="flex flex-col group-data-[collapsible=icon]:group-data-[state=collapsed]:hidden">
                   <h2 className="font-headline text-lg font-semibold text-sidebar-foreground">AbsenceEye</h2>
                   <p className="text-xs text-sidebar-foreground/80">لوحة تحكم المديرة</p>
                 </div>
               </div>
             </SidebarHeader>
             <SidebarContent>
-              <SidebarMenu>
+              <SidebarMenu className="p-2">
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="لوحة التحكم">
                     <Link href="/admin/dashboard">
@@ -73,7 +72,7 @@ export default function AdminDashboardLayout({
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarContent>
-            <SidebarFooter>
+            <SidebarFooter className="p-2">
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="الإعدادات">
@@ -86,7 +85,10 @@ export default function AdminDashboardLayout({
               </SidebarMenu>
             </SidebarFooter>
           </Sidebar>
-          <main className="flex-1 p-4 sm:p-6 bg-background">{children}</main>
+          <div className="flex flex-1 flex-col">
+            <MainHeader title="لوحة تحكم المديرة" />
+            <main className="flex-1 p-4 sm:p-6 bg-background">{children}</main>
+          </div>
         </div>
       </div>
     </SidebarProvider>
