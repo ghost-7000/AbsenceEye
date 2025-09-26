@@ -174,7 +174,7 @@ const Sidebar = React.forwardRef<
     const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
     
     const mainContent = (
-      <div className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground">
+      <div className="flex h-full w-full flex-col bg-sidebar-background text-sidebar-foreground">
         {children}
       </div>
     )
@@ -373,11 +373,12 @@ const SidebarMenuButton = React.forwardRef<
       return button
     }
 
-    if (typeof tooltip === "string") {
-      tooltip = {
-        children: tooltip,
-      }
-    }
+    const tooltipContentProps =
+      typeof tooltip === 'string' ? {children: tooltip} : tooltip;
+
+    const tooltipContent =
+      typeof tooltip === 'string' ? tooltip : tooltip.children;
+
 
     return (
       <Tooltip>
@@ -386,9 +387,9 @@ const SidebarMenuButton = React.forwardRef<
           side="right"
           align="center"
           hidden={state !== "collapsed" || isMobile}
-          {...tooltip}
+          {...tooltipContentProps}
         >
-          {tooltip}
+          {tooltipContent}
         </TooltipContent>
       </Tooltip>
     )
