@@ -11,7 +11,6 @@ import {
 import { MainHeader } from '@/components/shared/main-header';
 import Link from 'next/link';
 import { LayoutDashboard, Users, BookOpen, Settings, GraduationCap } from 'lucide-react';
-import { ClassProvider } from '@/context/class-context';
 
 export default function TeacherDashboardLayout({
   children,
@@ -19,7 +18,6 @@ export default function TeacherDashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClassProvider>
       <SidebarProvider>
         <div className="flex min-h-screen flex-col">
           <div className="flex flex-1">
@@ -77,6 +75,5 @@ export default function TeacherDashboardLayout({
           </div>
         </div>
       </SidebarProvider>
-    </ClassProvider>
   );
 }

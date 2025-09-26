@@ -3,13 +3,16 @@
 import { useState, useEffect } from 'react';
 import { StatsCard } from '../stats-card';
 import { BookOpen, Users, UserCheck } from 'lucide-react';
-import { useClasses } from '@/context/class-context';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 
-export default function TeacherDashboard() {
-  const { teacherClasses, teacherStudents } = useClasses();
+interface TeacherDashboardProps {
+  classCount: number;
+  studentCount: number;
+}
+
+export default function TeacherDashboard({ classCount, studentCount }: TeacherDashboardProps) {
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
   useEffect(() => {
@@ -39,13 +42,13 @@ export default function TeacherDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <StatsCard
           title="صفوفي"
-          value={teacherClasses.length.toString()}
+          value={classCount.toString()}
           icon={BookOpen}
           description="إجمالي عدد الصفوف المسندة إليك"
         />
         <StatsCard
           title="طلابي"
-          value={teacherStudents.length.toString()}
+          value={studentCount.toString()}
           icon={Users}
           description="إجمالي عدد الطلاب في صفوفك"
         />
