@@ -11,7 +11,6 @@ import {
 import { MainHeader } from '@/components/shared/main-header';
 import Link from 'next/link';
 import { GraduationCap, LayoutDashboard, Users, School, Settings, BarChart3 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 export default function AdminDashboardLayout({
   children,
@@ -23,18 +22,11 @@ export default function AdminDashboardLayout({
       <div className="flex min-h-screen flex-col">
         <div className="flex flex-1">
           <Sidebar side="right">
-            <SidebarHeader className="border-b p-2">
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" className="h-12 w-12 text-primary" asChild>
-                  <Link href="/admin/dashboard">
-                    <GraduationCap className="h-7 w-7" />
-                  </Link>
-                </Button>
-                <div className="flex flex-col group-data-[collapsible=icon]:group-data-[state=collapsed]:hidden">
+            <SidebarHeader className="border-b p-4 flex items-center justify-center">
+                <div className="flex flex-col items-center text-center group-data-[collapsible=icon]:group-data-[state=collapsed]:hidden">
                   <h2 className="font-headline text-lg font-semibold">AbsenceEye</h2>
                   <p className="text-xs text-muted-foreground">لوحة تحكم المديرة</p>
                 </div>
-              </div>
             </SidebarHeader>
             <SidebarContent>
               <SidebarMenu className="p-2">
