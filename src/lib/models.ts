@@ -26,11 +26,13 @@ const AttendanceRecordSchema = new Schema<AttendanceRecord>({
     classId: { type: String, required: true }, // Changed to String
     date: { type: String, required: true }, // Format: YYYY-MM-DD
     status: { type: String, enum: ['present', 'absent'], required: true },
+    timestamp: { type: Date, default: Date.now },
 });
 
 // Index for faster queries on attendance
-AttendanceRecordSchema.index({ studentId: 1, date: 1 }, { unique: true });
+AttendanceRecordSchema.index({ studentId: 1, date: 1, classId: 1 }, { unique: true });
 AttendanceRecordSchema.index({ classId: 1, date: 1 });
+AttendanceRecordSchema.index({ date: 1 });
 
 
 export const UserModel = models.User || model<User>('User', UserSchema);

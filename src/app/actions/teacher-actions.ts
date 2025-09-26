@@ -77,11 +77,12 @@ type AttendanceData = {
 export async function saveAttendance(records: AttendanceData[]) {
     await dbConnect();
     const date = format(new Date(), 'yyyy-MM-dd');
+    const timestamp = new Date();
 
     const operations = records.map(record => ({
         updateOne: {
             filter: { studentId: record.studentId, classId: record.classId, date: date },
-            update: { $set: { status: record.status, studentId: record.studentId, classId: record.classId, date } },
+            update: { $set: { status: record.status, studentId: record.studentId, classId: record.classId, date, timestamp } },
             upsert: true,
         }
     }));
@@ -149,7 +150,7 @@ export async function getDetailedAttendanceForTeacher(teacherId: string): Promis
 
     const classIds = teacherClasses.map(c => c._id.toString());
 
-    const records: AttendanceRecord[] = await AttendanceRecordModel.find({ classId: { $in: classIds } }).sort({ date: -1 }).lean();
+    const records: AttendanceRecord[] = await AttendanceRecordModel.find({ classId: { $in: classIds } }).sort({ date: -1, timestamp: -1 }).lean();
     if (records.length === 0) return [];
     
     const studentIds = records.map(r => r.studentId);

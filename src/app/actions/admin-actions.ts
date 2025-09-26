@@ -106,7 +106,7 @@ export interface DetailedAttendanceRecord extends AttendanceRecord {
 export async function getDetailedAttendanceRecords(): Promise<DetailedAttendanceRecord[]> {
     await dbConnect();
 
-    const records: AttendanceRecord[] = await AttendanceRecordModel.find().sort({ date: -1 }).lean();
+    const records: AttendanceRecord[] = await AttendanceRecordModel.find().sort({ date: -1, timestamp: -1 }).lean();
     if (records.length === 0) return [];
     
     const studentIds = records.map(r => r.studentId);

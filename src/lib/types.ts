@@ -35,4 +35,5 @@ export type AttendanceRecord = {
   classId: string;
   date: string; // YYYY-MM-DD
   status: AttendanceStatus;
+  timestamp: Date;
 };

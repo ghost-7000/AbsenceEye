@@ -39,11 +39,21 @@ export async function seedDatabase() {
 
     const studentCount = await StudentModel.countDocuments();
     if (studentCount > 0) {
-        console.log('Database appears to be seeded already with students.');
-        return;
+        // Even if students exist, check if attendance records are there to prevent re-seeding issues.
+        const attendanceCount = await AttendanceRecordModel.countDocuments();
+        if (attendanceCount > 0) {
+            console.log('Database appears to be seeded already with students and attendance.');
+            return;
+        }
     }
     
-    console.log('Database is empty, seeding with initial data...');
+    console.log('Database is empty or partially seeded, seeding with initial data...');
+
+    // Clear collections to ensure a clean slate, except for users
+    await ClassModel.deleteMany({});
+    await StudentModel.deleteMany({});
+    await AttendanceRecordModel.deleteMany({});
+    console.log('Cleared existing class, student, and attendance data.');
 
     const teacher = await UserModel.findOne({ email: 'teacher@example.com' });
     if (!teacher) {
@@ -86,7 +96,8 @@ export async function seedDatabase() {
     const attendanceRecords = [];
     const today = new Date();
     for (let i = 0; i < 5; i++) { // For the last 5 days
-        const date = format(subDays(today, i), 'yyyy-MM-dd');
+        const day = subDays(today, i);
+        const date = format(day, 'yyyy-MM-dd');
         for (const student of createdStudents) {
             // Make absences random but not too frequent
             const status = Math.random() > 0.15 ? 'present' : 'absent';
@@ -94,18 +105,13 @@ export async function seedDatabase() {
                 studentId: student._id.toString(),
                 classId: student.classId,
                 date: date,
-                status: status
+                status: status,
+                timestamp: day, // Use the day itself for timestamp
             });
         }
     }
     
-    // Use bulk insert with ordered: false to avoid stopping on duplicate key errors if re-run
-    await AttendanceRecordModel.insertMany(attendanceRecords, { ordered: false }).catch(err => {
-        // Ignore duplicate key errors, which can happen if seeding is interrupted and re-run
-        if (err.code !== 11000) {
-            console.error('Error inserting attendance records:', err);
-        }
-    });
+    await AttendanceRecordModel.insertMany(attendanceRecords);
 
     console.log('Attendance records created.');
     console.log('Database seeding complete.');
