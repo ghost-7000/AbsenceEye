@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut, User as UserIcon } from 'lucide-react';
+import { LogOut, User as UserIcon, Settings } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,15 +35,18 @@ export function UserNav() {
   };
 
   const avatarSrc = userRole === 'admin'
-    ? PlaceHolderImages.find(p => p.id === 'avatar1')?.imageUrl
-    : PlaceHolderImages.find(p => p.id === 'avatar2')?.imageUrl;
+    ? `https://picsum.photos/seed/admin-avatar/100/100`
+    : `https://picsum.photos/seed/teacher-avatar/100/100`;
+
+  const profileUrl = `/${userRole}/profile`;
+  const settingsUrl = `/${userRole}/settings`;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-9 w-9">
-            <AvatarImage src={avatarSrc} alt={userName} data-ai-hint="person face" />
+            <AvatarImage src={avatarSrc} alt={userName} data-ai-hint="avatar abstract" />
             <AvatarFallback>
               <UserIcon />
             </AvatarFallback>
@@ -58,9 +62,17 @@ export function UserNav() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem>
-            <UserIcon className="ms-2 h-4 w-4" />
-            <span>الملف الشخصي</span>
+          <DropdownMenuItem asChild>
+            <Link href={profileUrl}>
+              <UserIcon className="ms-2 h-4 w-4" />
+              <span>الملف الشخصي</span>
+            </Link>
+          </DropdownMenuItem>
+           <DropdownMenuItem asChild>
+            <Link href={settingsUrl}>
+              <Settings className="ms-2 h-4 w-4" />
+              <span>الإعدادات</span>
+            </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

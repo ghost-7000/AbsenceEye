@@ -48,17 +48,17 @@ export default function TeacherDashboardLayout({
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="صفوفي">
-                  <Link href="/teacher/dashboard">
+                  <Link href="/teacher/dashboard?tab=classes">
                     <BookOpen />
                     <span>صفوفي</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="طلابي">
-                   <Link href="/teacher/dashboard">
+                <SidebarMenuButton asChild tooltip="تسجيل الحضور">
+                   <Link href="/teacher/dashboard?tab=attendance">
                     <Users />
-                    <span>طلابي</span>
+                    <span>تسجيل الحضور</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -68,7 +68,7 @@ export default function TeacherDashboardLayout({
              <SidebarMenu>
                 <SidebarMenuItem>
                     <SidebarMenuButton asChild tooltip="الإعدادات">
-                        <Link href="#">
+                        <Link href="/teacher/settings">
                             <Settings />
                             <span>الإعدادات</span>
                         </Link>

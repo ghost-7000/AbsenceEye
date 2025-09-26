@@ -64,6 +64,7 @@ export default function AttendanceTracker() {
   };
   
   const handleSaveAttendance = () => {
+    // In a real app, you would send this data to your backend API
     console.log('Saving attendance:', attendance);
     toast({
         title: "تم حفظ الحضور",
@@ -110,7 +111,7 @@ export default function AttendanceTracker() {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
-                        <AvatarImage src={student.avatarUrl} alt={student.name} data-ai-hint="person face" />
+                        <AvatarImage src={student.avatarUrl} alt={student.name} data-ai-hint="avatar abstract" />
                         <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div className="font-medium">{student.name}</div>

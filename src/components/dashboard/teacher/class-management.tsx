@@ -48,14 +48,14 @@ export default function ClassManagement() {
                 <CardTitle>إدارة الصفوف والطلاب</CardTitle>
                 <CardDescription>عرض وتعديل الطلاب في صفوفك.</CardDescription>
             </div>
-             <Button size="sm" className="gap-1">
+             <Button size="sm" className="gap-1" disabled>
                 <PlusCircle className="h-4 w-4" />
                 إنشاء صف جديد
             </Button>
         </div>
       </CardHeader>
       <CardContent>
-        <Accordion type="single" collapsible className="w-full">
+        <Accordion type="single" collapsible className="w-full" defaultValue={teacherClasses[0]?.id}>
           {teacherClasses.map(c => {
             const students = getStudentsByClass(c.id);
             return (
@@ -68,7 +68,7 @@ export default function ClassManagement() {
                 </AccordionTrigger>
                 <AccordionContent>
                     <div className="mb-4 flex justify-end">
-                        <Button variant="outline" size="sm" className="gap-1">
+                        <Button variant="outline" size="sm" className="gap-1" disabled>
                             <UserPlus className="h-4 w-4" />
                             إضافة طالب
                         </Button>
@@ -87,7 +87,7 @@ export default function ClassManagement() {
                             <TableCell>
                               <div className="flex items-center gap-3">
                                 <Avatar className="h-9 w-9">
-                                  <AvatarImage src={student.avatarUrl} alt={student.name} data-ai-hint="person face" />
+                                  <AvatarImage src={student.avatarUrl} alt={student.name} data-ai-hint="avatar abstract" />
                                   <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 <div className="font-medium">{student.name}</div>
@@ -102,8 +102,8 @@ export default function ClassManagement() {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                  <DropdownMenuItem>تعديل</DropdownMenuItem>
-                                  <DropdownMenuItem className="text-destructive">حذف</DropdownMenuItem>
+                                  <DropdownMenuItem disabled>تعديل</DropdownMenuItem>
+                                  <DropdownMenuItem className="text-destructive" disabled>حذف</DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </TableCell>

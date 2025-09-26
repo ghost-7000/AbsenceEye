@@ -48,7 +48,7 @@ export default function AdminDashboardLayout({
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="إدارة المعلمات">
-                  <Link href="/admin/dashboard">
+                  <Link href="/admin/teachers">
                     <Users />
                     <span>المعلمات</span>
                   </Link>
@@ -56,7 +56,7 @@ export default function AdminDashboardLayout({
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="إدارة الصفوف">
-                   <Link href="/admin/dashboard">
+                   <Link href="/admin/classes">
                     <School />
                     <span>الصفوف</span>
                   </Link>
@@ -64,7 +64,7 @@ export default function AdminDashboardLayout({
               </SidebarMenuItem>
                <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="ملخص الحضور">
-                   <Link href="/admin/dashboard">
+                   <Link href="/admin/attendance">
                     <BarChart3 />
                     <span>ملخص الحضور</span>
                   </Link>
@@ -76,7 +76,7 @@ export default function AdminDashboardLayout({
              <SidebarMenu>
                 <SidebarMenuItem>
                     <SidebarMenuButton asChild tooltip="الإعدادات">
-                        <Link href="#">
+                        <Link href="/admin/settings">
                             <Settings />
                             <span>الإعدادات</span>
                         </Link>

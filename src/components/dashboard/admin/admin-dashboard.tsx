@@ -4,6 +4,9 @@ import { AttendanceSummary } from '@/components/dashboard/admin/attendance-summa
 import TeacherManagement from '@/components/dashboard/admin/teacher-management';
 import MostAbsentStudents from './most-absent-students';
 import { users, classes, students } from '@/lib/data';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 
 export default function AdminDashboard() {
   const totalTeachers = users.filter(u => u.role === 'teacher').length;
@@ -39,6 +42,15 @@ export default function AdminDashboard() {
       </div>
 
       <div>
+        <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-xl font-semibold">نظرة سريعة على المعلمات</h2>
+            <Button asChild variant="outline" size="sm">
+                <Link href="/admin/teachers">
+                    <span>عرض الكل</span>
+                    <ArrowLeft className="h-4 w-4" />
+                </Link>
+            </Button>
+        </div>
         <TeacherManagement />
       </div>
     </div>
