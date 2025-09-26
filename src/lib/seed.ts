@@ -54,12 +54,12 @@ export async function seedDatabase() {
     console.log('Creating initial classes...');
     const classA = await ClassModel.create({
         name: 'الصف الأول - أ',
-        teacherId: teacher._id.toString(),
+        teacherId: teacher._id,
         note: 'ملاحظات أولية حول الصف الأول - أ.'
     });
     const classB = await ClassModel.create({
         name: 'الصف الأول - ب',
-        teacherId: teacher._id.toString(),
+        teacherId: teacher._id,
         note: 'ملاحظات أولية حول الصف الأول - ب.'
     });
     console.log('Classes created.');
@@ -67,17 +67,17 @@ export async function seedDatabase() {
     console.log('Creating initial students...');
     const studentsData = [
         // Class A
-        { name: 'فاطمة علي', classId: classA._id.toString(), avatarUrl: 'https://picsum.photos/seed/s1/200' },
-        { name: 'عائشة محمد', classId: classA._id.toString(), avatarUrl: 'https://picsum.photos/seed/s2/200' },
-        { name: 'زينب عبدالله', classId: classA._id.toString(), avatarUrl: 'https://picsum.photos/seed/s3/200' },
-        { name: 'مريم أحمد', classId: classA._id.toString(), avatarUrl: 'https://picsum.photos/seed/s4/200' },
-        { name: 'سارة حسن', classId: classA._id.toString(), avatarUrl: 'https://picsum.photos/seed/s5/200' },
+        { name: 'فاطمة علي', classId: classA._id.toString(), avatarUrl: '' },
+        { name: 'عائشة محمد', classId: classA._id.toString(), avatarUrl: '' },
+        { name: 'زينب عبدالله', classId: classA._id.toString(), avatarUrl: '' },
+        { name: 'مريم أحمد', classId: classA._id.toString(), avatarUrl: '' },
+        { name: 'سارة حسن', classId: classA._id.toString(), avatarUrl: '' },
         // Class B
-        { name: 'هند خالد', classId: classB._id.toString(), avatarUrl: 'https://picsum.photos/seed/s6/200' },
-        { name: 'نورة فهد', classId: classB._id.toString(), avatarUrl: 'https://picsum.photos/seed/s7/200' },
-        { name: 'لولوة سعد', classId: classB._id.toString(), avatarUrl: 'https://picsum.photos/seed/s8/200' },
-        { name: 'جمانة ياسر', classId: classB._id.toString(), avatarUrl: 'https://picsum.photos/seed/s9/200' },
-        { name: 'حصة إبراهيم', classId: classB._id.toString(), avatarUrl: 'https://picsum.photos/seed/s10/200' },
+        { name: 'هند خالد', classId: classB._id.toString(), avatarUrl: '' },
+        { name: 'نورة فهد', classId: classB._id.toString(), avatarUrl: '' },
+        { name: 'لولوة سعد', classId: classB._id.toString(), avatarUrl: '' },
+        { name: 'جمانة ياسر', classId: classB._id.toString(), avatarUrl: '' },
+        { name: 'حصة إبراهيم', classId: classB._id.toString(), avatarUrl: '' },
     ];
     const createdStudents = await StudentModel.insertMany(studentsData);
     console.log(`${createdStudents.length} students created.`);

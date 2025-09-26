@@ -42,10 +42,7 @@ export async function addClass(name: string, teacherId: string) {
 
 export async function addStudent(name: string, classId: string) {
     await dbConnect();
-    // For demo, generating a random avatar
-    const randomSeed = Math.floor(Math.random() * 1000);
-    const avatarUrl = `https://picsum.photos/seed/${randomSeed}/200/200`;
-    const newStudent = new StudentModel({ name, classId, avatarUrl });
+    const newStudent = new StudentModel({ name, classId, avatarUrl: '' });
     await newStudent.save();
     revalidatePath('/teacher/classes');
 }
