@@ -2,7 +2,7 @@
 
 import dbConnect from "@/lib/mongodb";
 import { AttendanceRecordModel, StudentModel, ClassModel, UserModel } from "@/lib/models";
-import type { Student, User } from "@/lib/types";
+import type { Student, User, AttendanceRecord, Class } from "@/lib/types";
 import { revalidatePath } from "next/cache";
 
 interface AbsentStudent extends Student {
@@ -96,4 +96,32 @@ export async function getAdminStats() {
     const totalClasses = await ClassModel.countDocuments();
     const totalStudents = await StudentModel.countDocuments();
     return { totalTeachers, totalClasses, totalStudents };
+}
+
+export interface DetailedAttendanceRecord extends AttendanceRecord {
+    studentName: string;
+    className: string;
+}
+
+export async function getDetailedAttendanceRecords(): Promise<DetailedAttendanceRecord[]> {
+    await dbConnect();
+
+    const records = await AttendanceRecordModel.find().sort({ date: -1 }).lean();
+    const studentIds = records.map(r => r.studentId);
+    const classIds = records.map(r => r.classId);
+
+    const students = await StudentModel.find({ _id: { $in: studentIds } }).lean();
+    const classes = await ClassModel.find({ _id: { $in: classIds } }).lean();
+
+    const studentMap = new Map(students.map(s => [s._id.toString(), s.name]));
+    const classMap = new Map(classes.map(c => [c._id.toString(), c.name]));
+
+    const detailedRecords = records.map(record => ({
+        ...record,
+        id: record._id.toString(),
+        studentName: studentMap.get(record.studentId.toString()) || 'طالب محذوف',
+        className: classMap.get(record.classId.toString()) || 'صف محذوف',
+    }));
+
+    return JSON.parse(JSON.stringify(detailedRecords));
 }
