@@ -77,10 +77,10 @@ export default function TeacherDashboardLayout({
              </SidebarMenu>
           </SidebarFooter>
         </Sidebar>
-        <SidebarInset className="flex-1">
+        <div className="flex flex-1 flex-col">
           <MainHeader title="لوحة تحكم المعلمة" />
-          <main className="p-4 sm:p-6">{children}</main>
-        </SidebarInset>
+          <main className="flex-1 p-4 sm:p-6">{children}</main>
+        </div>
       </div>
     </SidebarProvider>
   );
