@@ -4,7 +4,7 @@ import type { User, Class, Student, AttendanceRecord } from './types';
 const UserSchema = new Schema<User>({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true }, // Added password field
+    password: { type: String, required: true },
     role: { type: String, enum: ['admin', 'teacher'], required: true },
     avatarUrl: { type: String },
 });
