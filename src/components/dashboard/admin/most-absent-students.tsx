@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import * as React from 'react';
 import {
@@ -16,15 +16,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { getMostAbsentStudents } from '@/app/actions/admin-actions';
 import { Loader2 } from 'lucide-react';
+import type { Student } from '@/lib/types';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 
-interface AbsentStudent {
-  id: string;
-  name: string;
-  avatarUrl?: string;
+interface AbsentStudent extends Student {
   absences: number;
   className: string;
 }
@@ -49,55 +50,63 @@ export default function MostAbsentStudents() {
   }, []);
 
   return (
-    <Card>
+    <Card className="flex h-full flex-col">
       <CardHeader>
-        <CardTitle>أكثر الطلاب غيابًا</CardTitle>
-        <CardDescription>قائمة بالطلاب الأكثر غيابًا.</CardDescription>
+        <CardTitle>الطلاب الأكثر غيابًا</CardTitle>
+        <CardDescription>قائمة بالطلاب الخمسة الأكثر غيابًا هذا العام.</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-grow">
         {loading ? (
-          <div className="flex justify-center items-center h-48">
+          <div className="flex h-full items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ) : (
+        ) : mostAbsent.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>الطالب</TableHead>
-                <TableHead>الصف</TableHead>
                 <TableHead className="text-center">أيام الغياب</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mostAbsent.length > 0 ? (
-                mostAbsent.map((student) => (
+                {mostAbsent.map((student) => (
                   <TableRow key={student.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-9 w-9">
-                          <AvatarImage src={student.avatarUrl || undefined} alt={student.name} />
                           <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
                         </Avatar>
-                        <div className="font-medium">{student.name}</div>
+                        <div>
+                            <div className="font-medium">{student.name}</div>
+                            <div className="text-xs text-muted-foreground">{student.className}</div>
+                        </div>
                       </div>
                     </TableCell>
-                    <TableCell>{student.className}</TableCell>
                     <TableCell className="text-center">
                       <Badge variant="destructive">{student.absences}</Badge>
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={3} className="h-24 text-center">
-                    لا يوجد طلاب غائبون.
-                  </TableCell>
-                </TableRow>
-              )}
+                ))}
             </TableBody>
           </Table>
+        ) : (
+             <div className="flex h-full flex-col items-center justify-center rounded-md border border-dashed p-8 text-center">
+                <h3 className="text-lg font-medium">لا توجد بيانات غياب</h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                    لم يتم تسجيل أي حالات غياب حتى الآن.
+                </p>
+            </div>
         )}
       </CardContent>
+       {mostAbsent.length > 0 && (
+         <div className="border-t p-4">
+            <Link href="/admin/attendance-records">
+                <Button variant="ghost" size="sm" className="w-full">
+                    عرض كل السجلات <ArrowLeft className="mr-2 h-4 w-4" />
+                </Button>
+            </Link>
+         </div>
+      )}
     </Card>
   );
 }

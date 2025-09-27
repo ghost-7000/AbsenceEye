@@ -1,14 +1,23 @@
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import ClassManagement from "@/components/dashboard/admin/class-management";
+import { getClassesWithStudentCounts } from '@/app/actions/admin-actions';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 
-export default function AdminClassesPage() {
+export default async function AdminClassesPage() {
+    const initialClasses = await getClassesWithStudentCounts();
     return (
         <Card>
             <CardHeader>
-                <CardTitle>إدارة الصفوف</CardTitle>
-                <CardDescription>عرض وإدارة جميع الصفوف الدراسية في النظام.</CardDescription>
+                <CardTitle>إدارة الصفوف الدراسية</CardTitle>
+                <CardDescription>عرض وإدارة جميع الصفوف في النظام.</CardDescription>
             </CardHeader>
             <CardContent>
-                <p>سيتم عرض تفاصيل إدارة الصفوف هنا.</p>
+               <ClassManagement initialClasses={initialClasses} />
             </CardContent>
         </Card>
     );

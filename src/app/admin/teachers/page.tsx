@@ -1,9 +1,26 @@
 import TeacherManagement from "@/components/dashboard/admin/teacher-management";
+import { getTeachers } from '@/app/actions/admin-actions';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 
-export default function AdminTeachersPage() {
+export default async function AdminTeachersPage() {
+    const initialTeachers = await getTeachers();
     return (
-        <div>
-            <TeacherManagement />
-        </div>
+        <Card>
+            <CardHeader>
+                <CardTitle>إدارة المعلمات</CardTitle>
+                <CardDescription>
+                إضافة وتعديل وحذف حسابات المعلمات في النظام.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <TeacherManagement initialTeachers={initialTeachers} />
+            </CardContent>
+        </Card>
     );
 }

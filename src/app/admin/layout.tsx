@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/sidebar';
 import { MainHeader } from '@/components/shared/main-header';
 import Link from 'next/link';
-import { GraduationCap, LayoutDashboard, Users, School, Settings, BarChart3, ClipboardList } from 'lucide-react';
+import { GraduationCap, LayoutDashboard, Users, School, Settings, ClipboardList } from 'lucide-react';
 
 export default function AdminDashboardLayout({
   children,
@@ -50,14 +50,6 @@ export default function AdminDashboardLayout({
                     <Link href="/admin/classes">
                       <School />
                       <span>الصفوف</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="ملخص الحضور" href="/admin/attendance">
-                    <Link href="/admin/attendance">
-                      <BarChart3 />
-                      <span>ملخص الحضور</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

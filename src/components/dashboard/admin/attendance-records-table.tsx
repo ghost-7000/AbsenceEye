@@ -1,13 +1,6 @@
-'use client'
+'use client';
 
 import * as React from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -16,178 +9,116 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from "@/components/ui/accordion"
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { getDetailedAttendanceRecords, DetailedAttendanceRecord } from '@/app/actions/admin-actions';
-import { Loader2 } from 'lucide-react';
+import type { DetailedAttendanceRecord } from '@/app/actions/admin-actions';
+import { Calendar as CalendarIcon, ClipboardList, Search } from 'lucide-react';
 import { format } from 'date-fns';
+import { ar } from 'date-fns/locale';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import { useDebounce } from '@/hooks/use-debounce';
 
-interface GroupedRecords {
-    [className: string]: {
-        records: DetailedAttendanceRecord[];
-        time: string | null;
-    }
-}
-
-export default function AttendanceRecordsTable() {
-  const [allRecords, setAllRecords] = React.useState<DetailedAttendanceRecord[]>([]);
-  const [loading, setLoading] = React.useState(true);
+export default function AttendanceRecordsTable({ initialRecords }: { initialRecords: DetailedAttendanceRecord[]}) {
+  const [records, setRecords] = React.useState<DetailedAttendanceRecord[]>(initialRecords);
   const [searchTerm, setSearchTerm] = React.useState('');
-  const [filterDate, setFilterDate] = React.useState(format(new Date(), 'yyyy-MM-dd'));
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const [date, setDate] = React.useState<Date | undefined>();
 
-  React.useEffect(() => {
-    async function fetchRecords() {
-      setLoading(true);
-      try {
-        const data = await getDetailedAttendanceRecords();
-        setAllRecords(data);
-      } catch (error) {
-        console.error("Failed to fetch attendance records", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchRecords();
-  }, []);
-
-  const groupedAndFilteredRecords: GroupedRecords = React.useMemo(() => {
-    const recordsForDate = allRecords.filter(record => {
-        // Ensure we compare only the date part of the string
-        return record.date.substring(0, 10) === filterDate;
+  const filteredRecords = React.useMemo(() => {
+    return records.filter(record => {
+      const matchesDate = !date || record.date.substring(0, 10) === format(date, 'yyyy-MM-dd');
+      const matchesSearch = debouncedSearchTerm === '' || 
+                            record.studentName.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+                            record.className.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
+      return matchesDate && matchesSearch;
     });
+  }, [records, date, debouncedSearchTerm]);
 
-    const grouped: GroupedRecords = {};
-
-    recordsForDate.forEach(record => {
-        const className = record.className;
-        if (!grouped[className]) {
-            grouped[className] = { 
-                records: [], 
-                time: record.timestamp ? format(new Date(record.timestamp), 'hh:mm a') : null
-            };
-        }
-        grouped[className].records.push(record);
-    });
-    
-    if (!searchTerm) {
-        return grouped;
-    }
-    
-    const lowercasedSearch = searchTerm.toLowerCase();
-    const finalGroup: GroupedRecords = {};
-    Object.keys(grouped).forEach(className => {
-        if (className.toLowerCase().includes(lowercasedSearch)) {
-            finalGroup[className] = grouped[className];
-        } else { 
-            const filteredStudents = grouped[className].records.filter(
-                record => record.studentName.toLowerCase().includes(lowercasedSearch)
-            );
-            if (filteredStudents.length > 0) {
-                finalGroup[className] = {
-                    ...grouped[className],
-                    records: filteredStudents
-                };
-            }
-        }
-    });
-    return finalGroup;
-
-  }, [allRecords, filterDate, searchTerm]);
-
-  const sortedClassNames = Object.keys(groupedAndFilteredRecords).sort();
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>سجلات الحضور</CardTitle>
-        <CardDescription>عرض سجلات حضور وغياب الطلاب لليوم المحدد، مجمعة حسب الصف.</CardDescription>
-        <div className="flex flex-col sm:flex-row gap-4 pt-4">
-            <Input
-                type="date"
-                value={filterDate}
-                onChange={(e) => setFilterDate(e.target.value)}
-                className="max-w-sm"
-            />
-            <Input
-                placeholder="بحث باسم الطالب أو الصف..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="max-w-sm"
-            />
-        </div>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="flex justify-center items-center h-48">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        ) : sortedClassNames.length > 0 ? (
-           <Accordion type="multiple" className="w-full space-y-4" defaultValue={sortedClassNames}>
-             {sortedClassNames.map(className => {
-                const { records, time } = groupedAndFilteredRecords[className];
-                const presentCount = records.filter(r => r.status === 'present').length;
-                const absentCount = records.length - presentCount;
-
-                return (
-                    <AccordionItem value={className} key={className} className="border rounded-lg bg-card">
-                        <AccordionTrigger className="px-6 py-4 hover:no-underline rounded-t-lg">
-                            <div className='flex justify-between items-center w-full'>
-                                <div className='text-start'>
-                                    <h3 className="font-semibold text-lg">{className}</h3>
-                                    <p className="text-sm text-muted-foreground mt-1">
-                                        {time ? `وقت التسجيل: ${time}` : 'لم يتم تحديد وقت'}
-                                    </p>
-                                </div>
-                                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-sm pe-4">
-                                     <span><Badge variant="secondary">العدد: {records.length}</Badge></span>
-                                     <span><Badge variant="outline" className="text-green-600 border-green-200">حضور: {presentCount}</Badge></span>
-                                     <span><Badge variant="destructive">غياب: {absentCount}</Badge></span>
-                                </div>
-                            </div>
-                        </AccordionTrigger>
-                        <AccordionContent>
-                            <div className="border-t">
-                                <Table>
-                                  <TableHeader>
-                                    <TableRow>
-                                      <TableHead>الطالب</TableHead>
-                                      <TableHead className="text-center">الحالة</TableHead>
-                                    </TableRow>
-                                  </TableHeader>
-                                  <TableBody>
-                                    {records.sort((a, b) => a.studentName.localeCompare(b.studentName)).map(record => (
-                                      <TableRow key={record.id}>
-                                        <TableCell className="font-medium">{record.studentName}</TableCell>
-                                        <TableCell className="text-center">
-                                          <Badge variant={record.status === 'present' ? 'secondary' : 'destructive'}>
-                                            {record.status === 'present' ? 'حاضر' : 'غائب'}
-                                          </Badge>
-                                        </TableCell>
-                                      </TableRow>
-                                    ))}
-                                  </TableBody>
-                                </Table>
-                            </div>
-                        </AccordionContent>
-                    </AccordionItem>
-                )
-             })}
-           </Accordion>
-        ) : (
-          <div className="flex flex-col items-center justify-center rounded-md border border-dashed p-12 text-center mt-6">
-                <h3 className="text-lg font-medium">لا توجد سجلات</h3>
-                <p className="mt-2 text-sm text-muted-foreground">
-                    لم يتم العثور على سجلات حضور لليوم المحدد أو لمعايير البحث.
-                </p>
+    <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="relative w-full sm:max-w-xs">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                    placeholder="بحث باسم الطالب أو الصف..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9"
+                />
             </div>
-        )}
-      </CardContent>
-    </Card>
+
+            <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={'outline'}
+                className={cn(
+                  'w-full sm:w-[280px] justify-start text-right font-normal',
+                  !date && 'text-muted-foreground'
+                )}
+              >
+                <CalendarIcon className="ms-2 h-4 w-4" />
+                {date ? format(date, 'PPP', { locale: ar }) : <span>اختر تاريخًا لتصفيته</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={setDate}
+                initialFocus
+                disabled={(d) => d > new Date() || d < new Date('2024-01-01')}
+              />
+            </PopoverContent>
+          </Popover>
+          {date && (
+             <Button variant="ghost" onClick={() => setDate(undefined)}>مسح التاريخ</Button>
+          )}
+        </div>
+
+      <div className="border rounded-lg overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>الطالب</TableHead>
+              <TableHead>الصف</TableHead>
+              <TableHead>التاريخ</TableHead>
+              <TableHead className="text-center">الحالة</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredRecords.length > 0 ? (
+                filteredRecords.map(record => (
+                <TableRow key={record.id}>
+                    <TableCell className="font-medium">{record.studentName}</TableCell>
+                    <TableCell>{record.className}</TableCell>
+                    <TableCell>{format(new Date(record.date), 'yyyy/MM/dd')}</TableCell>
+                    <TableCell className="text-center">
+                    <Badge variant={record.status === 'present' ? 'secondary' : 'destructive'}>
+                        {record.status === 'present' ? 'حاضر' : 'غائب'}
+                    </Badge>
+                    </TableCell>
+                </TableRow>
+                ))
+            ) : (
+                <TableRow>
+                    <TableCell colSpan={4} className="h-48 text-center">
+                       <div className="flex flex-col items-center gap-4">
+                            <ClipboardList className="h-12 w-12 text-muted-foreground" />
+                            <h3 className="font-semibold">لم يتم العثور على سجلات</h3>
+                            <p className="text-muted-foreground text-sm">
+                                {searchTerm || date ? 'جرّب تعديل فلاتر البحث.' : 'لا توجد سجلات حضور مسجلة بعد.'}
+                            </p>
+                        </div>
+                    </TableCell>
+                </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
   );
 }

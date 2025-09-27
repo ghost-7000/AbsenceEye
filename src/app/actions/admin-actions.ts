@@ -13,7 +13,6 @@ interface AbsentStudent extends Student {
 export async function getMostAbsentStudents(): Promise<AbsentStudent[]> {
     await dbConnect();
 
-    // 1. Aggregate to get absence counts for each student
     const absenceCounts = await AttendanceRecordModel.aggregate([
         { $match: { status: 'absent' } },
         { $group: { _id: '$studentId', absences: { $sum: 1 } } },
@@ -21,22 +20,20 @@ export async function getMostAbsentStudents(): Promise<AbsentStudent[]> {
         { $limit: 5 }
     ]);
     
+    if (absenceCounts.length === 0) return [];
+    
     const studentIds = absenceCounts.map(item => item._id);
-
-    // 2. Find student details for the top absent students
     const students = await StudentModel.find({ _id: { $in: studentIds } }).lean();
+    if (students.length === 0) return [];
 
-    // 3. Find class details for these students
-    const classIds = students.map(student => student.classId);
+    const classIds = [...new Set(students.map(student => student.classId))];
     const classes = await ClassModel.find({ _id: { $in: classIds } }).lean();
     
-    // 4. Create maps for easy lookup
     const studentMap = new Map(students.map(s => [s._id.toString(), s]));
     const classMap = new Map(classes.map(c => [c._id.toString(), c]));
     const absenceMap = new Map(absenceCounts.map(item => [item._id.toString(), item.absences]));
 
-    // 5. Combine the data
-    const mostAbsent: AbsentStudent[] = studentIds.map(studentId => {
+    const mostAbsent = studentIds.map(studentId => {
         const student = studentMap.get(studentId.toString());
         if (!student) return null;
 
@@ -45,20 +42,21 @@ export async function getMostAbsentStudents(): Promise<AbsentStudent[]> {
         return {
             ...student,
             id: student._id.toString(),
+            _id: student._id,
             absences: absenceMap.get(studentId.toString()) || 0,
             className: studentClass?.name || 'غير معروف',
         };
     }).filter((s): s is AbsentStudent => s !== null)
       .sort((a, b) => b.absences - a.absences);
 
-    // This is needed because the lean object doesn't have the id property
     return JSON.parse(JSON.stringify(mostAbsent));
 }
+
 
 export async function getTeachers(): Promise<User[]> {
     await dbConnect();
     const teachers = await UserModel.find({ role: 'teacher' }).lean();
-    return JSON.parse(JSON.stringify(teachers));
+    return JSON.parse(JSON.stringify(teachers.map(t => ({...t, id: t._id.toString()}))));
 }
 
 export async function addTeacher(name: string, email: string) {
@@ -85,16 +83,17 @@ export async function updateTeacher(teacherId: string, name: string, email: stri
 export async function deleteTeacher(teacherId: string) {
     await dbConnect();
     await UserModel.findByIdAndDelete(teacherId);
-    // Also need to handle re-assigning or deleting classes/students of this teacher if needed
     revalidatePath('/admin/teachers');
     revalidatePath('/admin/dashboard');
 }
 
 export async function getAdminStats() {
     await dbConnect();
-    const totalTeachers = await UserModel.countDocuments({ role: 'teacher' });
-    const totalClasses = await ClassModel.countDocuments();
-    const totalStudents = await StudentModel.countDocuments();
+    const [totalTeachers, totalClasses, totalStudents] = await Promise.all([
+      UserModel.countDocuments({ role: 'teacher' }),
+      ClassModel.countDocuments(),
+      StudentModel.countDocuments()
+    ]);
     return { totalTeachers, totalClasses, totalStudents };
 }
 
@@ -106,10 +105,10 @@ export interface DetailedAttendanceRecord extends AttendanceRecord {
 export async function getDetailedAttendanceRecords(): Promise<DetailedAttendanceRecord[]> {
     await dbConnect();
 
-    const records: AttendanceRecord[] = await AttendanceRecordModel.find().sort({ date: -1, timestamp: -1 }).lean();
+    const records: AttendanceRecord[] = await AttendanceRecordModel.find().sort({ date: -1, timestamp: -1 }).limit(200).lean();
     if (records.length === 0) return [];
     
-    const studentIds = records.map(r => r.studentId);
+    const studentIds = [...new Set(records.map(r => r.studentId))];
     const classIds = [...new Set(records.map(r => r.classId))];
 
     const students = await StudentModel.find({ _id: { $in: studentIds } }).lean();
@@ -134,4 +133,34 @@ export async function getDetailedAttendanceRecords(): Promise<DetailedAttendance
     }).filter((r): r is DetailedAttendanceRecord => r !== null);
     
     return JSON.parse(JSON.stringify(detailedRecords));
+}
+
+export interface ClassWithStudentCount extends Class {
+    studentCount: number;
+    teacherName: string;
+}
+
+export async function getClassesWithStudentCounts(): Promise<ClassWithStudentCount[]> {
+    await dbConnect();
+    
+    const classes = await ClassModel.find().lean();
+    if (classes.length === 0) return [];
+
+    const teacherIds = [...new Set(classes.map(c => c.teacherId))];
+    const teachers = await UserModel.find({ _id: { $in: teacherIds } }).lean();
+    const teacherMap = new Map(teachers.map(t => [t._id.toString(), t.name]));
+
+    const result: ClassWithStudentCount[] = [];
+
+    for (const cls of classes) {
+        const studentCount = await StudentModel.countDocuments({ classId: cls._id.toString() });
+        result.push({
+            ...cls,
+            id: cls._id.toString(),
+            studentCount,
+            teacherName: teacherMap.get(cls.teacherId) || 'غير معين',
+        });
+    }
+
+    return JSON.parse(JSON.stringify(result));
 }

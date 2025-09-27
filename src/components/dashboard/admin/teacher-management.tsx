@@ -1,22 +1,14 @@
 'use client';
 
 import * as React from 'react';
-import { MoreHorizontal, PlusCircle, Loader2 } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Loader2, Search, Users } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
   DialogDescription,
 } from '@/components/ui/dialog';
@@ -41,13 +33,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { getTeachers, addTeacher, updateTeacher, deleteTeacher } from '@/app/actions/admin-actions';
+import { useDebounce } from '@/hooks/use-debounce';
 
-export default function TeacherManagement() {
+export default function TeacherManagement({ initialTeachers }: { initialTeachers: User[]}) {
   const { toast } = useToast();
-  const [teachers, setTeachers] = React.useState<User[]>([]);
-  const [loading, setLoading] = React.useState(true);
+  const [teachers, setTeachers] = React.useState<User[]>(initialTeachers);
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   
   const [isAddDialogOpen, setAddDialogOpen] = React.useState(false);
   const [isEditDialogOpen, setEditDialogOpen] = React.useState(false);
@@ -55,27 +48,21 @@ export default function TeacherManagement() {
   const [selectedTeacher, setSelectedTeacher] = React.useState<User | null>(null);
 
   const fetchTeachers = React.useCallback(async () => {
-    setLoading(true);
     try {
       const data = await getTeachers();
       setTeachers(data);
     } catch (error) {
-      toast({ variant: 'destructive', title: 'خطأ', description: 'فشل تحميل قائمة المعلمات.'});
-    } finally {
-      setLoading(false);
+      toast({ variant: 'destructive', title: 'خطأ', description: 'فشل تحديث قائمة المعلمات.'});
     }
   }, [toast]);
 
-  React.useEffect(() => {
-    fetchTeachers();
-  }, [fetchTeachers]);
+  const filteredTeachers = React.useMemo(() => 
+    teachers.filter(
+        teacher =>
+        teacher.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        teacher.email.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+    ), [teachers, debouncedSearchTerm]);
 
-
-  const filteredTeachers = teachers.filter(
-    teacher =>
-      teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      teacher.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   const handleAddTeacher = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -94,7 +81,7 @@ export default function TeacherManagement() {
     try {
       await addTeacher(name, email);
       toast({ title: 'نجاح', description: `تمت إضافة المعلمة ${name} بنجاح.` });
-      fetchTeachers(); // Refresh
+      await fetchTeachers(); 
       setAddDialogOpen(false);
       form.reset();
     } catch (error) {
@@ -115,9 +102,9 @@ export default function TeacherManagement() {
     const email = formData.get('email') as string;
 
     try {
-      await updateTeacher(selectedTeacher._id.toString(), name, email);
+      await updateTeacher(selectedTeacher.id, name, email);
       toast({ title: 'نجاح', description: `تم تعديل بيانات المعلمة ${name} بنجاح.` });
-      fetchTeachers();
+      await fetchTeachers();
       setEditDialogOpen(false);
       setSelectedTeacher(null);
     } catch (error) {
@@ -131,9 +118,9 @@ export default function TeacherManagement() {
     if (!selectedTeacher) return;
     setIsProcessing(true);
     try {
-      await deleteTeacher(selectedTeacher._id.toString());
+      await deleteTeacher(selectedTeacher.id);
       toast({ title: 'نجاح', description: `تم حذف المعلمة ${selectedTeacher.name} بنجاح.` });
-      fetchTeachers();
+      await fetchTeachers();
       setDeleteDialogOpen(false);
       setSelectedTeacher(null);
     } catch (error) {
@@ -144,20 +131,22 @@ export default function TeacherManagement() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between gap-4">
-            <div>
-                <CardTitle>إدارة المعلمات</CardTitle>
-                <CardDescription>
-                إضافة وتعديل وحذف حسابات المعلمات.
-                </CardDescription>
+    <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="relative w-full sm:max-w-xs">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                    placeholder="بحث بالاسم أو البريد..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9"
+                />
             </div>
             <Dialog open={isAddDialogOpen} onOpenChange={setAddDialogOpen}>
                 <DialogTrigger asChild>
-                    <Button size="sm" className="gap-1">
+                    <Button size="sm" className="gap-1 w-full sm:w-auto">
                         <PlusCircle className="h-4 w-4" />
-                        <span>إضافة معلمة</span>
+                        <span>إضافة معلمة جديدة</span>
                     </Button>
                 </DialogTrigger>
                 <DialogContent>
@@ -168,11 +157,11 @@ export default function TeacherManagement() {
                         <div className="grid gap-4 py-4">
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="name" className="text-right">الاسم</Label>
-                                <Input id="name" name="name" className="col-span-3" />
+                                <Input id="name" name="name" className="col-span-3" required />
                             </div>
                              <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="email" className="text-right">البريد الإلكتروني</Label>
-                                <Input id="email" name="email" type="email" className="col-span-3" />
+                                <Label htmlFor="email" className="text-right">البريد</Label>
+                                <Input id="email" name="email" type="email" className="col-span-3" required />
                             </div>
                         </div>
                         <DialogFooter>
@@ -185,26 +174,12 @@ export default function TeacherManagement() {
                 </DialogContent>
             </Dialog>
         </div>
-        <div className="mt-4">
-            <Input 
-                placeholder="بحث بالاسم أو البريد الإلكتروني..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="max-w-sm"
-            />
-        </div>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-            <div className="flex justify-center items-center h-48">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        ) : (
+      <div className="border rounded-lg overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>الاسم</TableHead>
-                <TableHead>البريد الإلكتروني</TableHead>
+                <TableHead className="hidden sm:table-cell">البريد الإلكتروني</TableHead>
                 <TableHead>
                   <span className="sr-only">الإجراءات</span>
                 </TableHead>
@@ -213,7 +188,7 @@ export default function TeacherManagement() {
             <TableBody>
               {filteredTeachers.length > 0 ? (
                 filteredTeachers.map(teacher => (
-                  <TableRow key={teacher._id.toString()}>
+                  <TableRow key={teacher.id}>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-3">
                         <Avatar className="h-9 w-9">
@@ -223,37 +198,44 @@ export default function TeacherManagement() {
                         {teacher.name}
                       </div>
                     </TableCell>
-                    <TableCell>{teacher.email}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{teacher.email}</TableCell>
                     <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup="true" size="icon" variant="ghost">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>الإجراءات</DropdownMenuLabel>
-                          <DropdownMenuItem onSelect={() => { setSelectedTeacher(teacher); setEditDialogOpen(true); }}>تعديل</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive" onSelect={() => { setSelectedTeacher(teacher); setDeleteDialogOpen(true); }}>
-                            حذف
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <div className="flex justify-end">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                            <Button aria-haspopup="true" size="icon" variant="ghost">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Toggle menu</span>
+                            </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>الإجراءات</DropdownMenuLabel>
+                            <DropdownMenuItem onSelect={() => { setSelectedTeacher(teacher); setEditDialogOpen(true); }}>تعديل</DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive" onSelect={() => { setSelectedTeacher(teacher); setDeleteDialogOpen(true); }}>
+                                حذف
+                            </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={3} className="h-24 text-center">
-                    لا توجد نتائج.
+                  <TableCell colSpan={3} className="h-48 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                        <Users className="h-12 w-12 text-muted-foreground" />
+                        <h3 className="font-semibold">لم يتم العثور على معلمات</h3>
+                        <p className="text-muted-foreground text-sm">
+                            {searchTerm ? 'جرّب كلمة بحث أخرى.' : 'ابدأ بإضافة معلمة جديدة.'}
+                        </p>
+                    </div>
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
-        )}
-      </CardContent>
+        </div>
 
         {/* Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setEditDialogOpen}>
@@ -265,11 +247,11 @@ export default function TeacherManagement() {
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="name-edit" className="text-right">الاسم</Label>
-                            <Input id="name-edit" name="name" defaultValue={selectedTeacher?.name} className="col-span-3" />
+                            <Input id="name-edit" name="name" defaultValue={selectedTeacher?.name} className="col-span-3" required />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="email-edit" className="text-right">البريد الإلكتروني</Label>
-                            <Input id="email-edit" name="email" type="email" defaultValue={selectedTeacher?.email} className="col-span-3" />
+                            <Label htmlFor="email-edit" className="text-right">البريد</Label>
+                            <Input id="email-edit" name="email" type="email" defaultValue={selectedTeacher?.email} className="col-span-3" required />
                         </div>
                     </div>
                     <DialogFooter>
@@ -300,9 +282,6 @@ export default function TeacherManagement() {
                 </DialogFooter>
             </DialogContent>
         </Dialog>
-
-    </Card>
+    </div>
   );
 }
-
-    
