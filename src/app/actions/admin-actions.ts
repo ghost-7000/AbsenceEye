@@ -63,12 +63,14 @@ export async function getTeachers(): Promise<User[]> {
     return teachers.map(t => ({
         ...t, 
         id: t._id.toString(),
-        _id: t._id.toString()
+        _id: t._id.toString(),
+        subject: t.subject || 'غير محدد'
     }));
 }
 
-export async function addTeacher(name: string, email: string, password: string, subject: string) {
+export async function addTeacher(data: { name: string, email: string, password: string, subject: string }) {
     await dbConnect();
+    const { name, email, password, subject } = data;
     const newTeacher = new UserModel({
         name,
         email,
@@ -82,9 +84,9 @@ export async function addTeacher(name: string, email: string, password: string, 
     revalidatePath('/admin/dashboard');
 }
 
-export async function updateTeacher(teacherId: string, name: string, email: string, subject: string) {
+export async function updateTeacher(teacherId: string, data: { name: string, email: string, subject: string }) {
     await dbConnect();
-    await UserModel.findByIdAndUpdate(teacherId, { name, email, subject });
+    await UserModel.findByIdAndUpdate(teacherId, data);
     revalidatePath('/admin/teachers');
 }
 

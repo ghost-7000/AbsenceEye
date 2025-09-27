@@ -2,6 +2,9 @@
 
 import * as React from 'react';
 import { MoreHorizontal, PlusCircle, Loader2, Search, Users } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -28,26 +31,56 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { User } from '@/lib/types';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { getTeachers, addTeacher, updateTeacher, deleteTeacher } from '@/app/actions/admin-actions';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Badge } from '@/components/ui/badge';
 
+// Schemas for form validation
+const addTeacherSchema = z.object({
+  name: z.string().min(2, { message: 'الاسم مطلوب' }),
+  email: z.string().email({ message: 'بريد إلكتروني غير صالح' }),
+  password: z.string().min(6, { message: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' }),
+  subject: z.string().min(2, { message: 'المادة مطلوبة' }),
+});
+
+const editTeacherSchema = z.object({
+  name: z.string().min(2, { message: 'الاسم مطلوب' }),
+  email: z.string().email({ message: 'بريد إلكتروني غير صالح' }),
+  subject: z.string().min(2, { message: 'المادة مطلوبة' }),
+});
+
 export default function TeacherManagement({ initialTeachers }: { initialTeachers: User[]}) {
   const { toast } = useToast();
   const [teachers, setTeachers] = React.useState<User[]>(initialTeachers);
-  const [isProcessing, setIsProcessing] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   
-  const [isAddDialogOpen, setAddDialogOpen] = React.useState(false);
-  const [isEditDialogOpen, setEditDialogOpen] = React.useState(false);
-  const [isDeleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
-  const [selectedTeacher, setSelectedTeacher] = React.useState<User | null>(null);
+  // State for controlling dialogs
+  const [dialog, setDialog] = React.useState<{
+    type: 'add' | 'edit' | 'delete' | null;
+    teacher?: User;
+  }>({ type: null });
+
+  const addForm = useForm<z.infer<typeof addTeacherSchema>>({
+    resolver: zodResolver(addTeacherSchema),
+    defaultValues: { name: '', email: '', password: '', subject: '' },
+  });
+
+  const editForm = useForm<z.infer<typeof editTeacherSchema>>({
+    resolver: zodResolver(editTeacherSchema),
+  });
 
   const fetchTeachers = React.useCallback(async () => {
     try {
@@ -57,6 +90,8 @@ export default function TeacherManagement({ initialTeachers }: { initialTeachers
       toast({ variant: 'destructive', title: 'خطأ', description: 'فشل تحديث قائمة المعلمات.'});
     }
   }, [toast]);
+  
+  const isProcessing = addForm.formState.isSubmitting || editForm.formState.isSubmitting;
 
   const filteredTeachers = React.useMemo(() => 
     teachers.filter(
@@ -67,80 +102,56 @@ export default function TeacherManagement({ initialTeachers }: { initialTeachers
     ), [teachers, debouncedSearchTerm]);
 
 
-  const handleAddTeacher = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setIsProcessing(true);
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-    const name = formData.get('name') as string;
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
-    const subject = formData.get('subject') as string;
-    
-    if (!name || !email || !password || !subject) {
-        toast({ variant: 'destructive', title: 'خطأ', description: 'الرجاء ملء جميع الحقول.' });
-        setIsProcessing(false);
-        return;
-    }
-    
-    if (password.length < 6) {
-        toast({ variant: 'destructive', title: 'خطأ', description: 'يجب أن تكون كلمة المرور 6 أحرف على الأقل.' });
-        setIsProcessing(false);
-        return;
-    }
-
+  const handleAddSubmit = async (values: z.infer<typeof addTeacherSchema>) => {
     try {
-      await addTeacher(name, email, password, subject);
-      toast({ title: 'نجاح', description: `تمت إضافة المعلمة ${name} بنجاح.` });
+      await addTeacher(values);
+      toast({ title: 'نجاح', description: `تمت إضافة المعلمة ${values.name} بنجاح.` });
       await fetchTeachers(); 
-      setAddDialogOpen(false);
-      form.reset();
+      setDialog({ type: null });
     } catch (error) {
       toast({ variant: 'destructive', title: 'فشل الإضافة', description: 'حدث خطأ أثناء إضافة المعلمة.'});
-    } finally {
-      setIsProcessing(false);
     }
   };
 
-  const handleEditTeacher = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!selectedTeacher) return;
-    setIsProcessing(true);
-
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-    const name = formData.get('name') as string;
-    const email = formData.get('email') as string;
-    const subject = formData.get('subject') as string;
-
+  const handleEditSubmit = async (values: z.infer<typeof editTeacherSchema>) => {
+    if (!dialog.teacher) return;
     try {
-      await updateTeacher(selectedTeacher.id, name, email, subject);
-      toast({ title: 'نجاح', description: `تم تعديل بيانات المعلمة ${name} بنجاح.` });
+      await updateTeacher(dialog.teacher.id, values);
+      toast({ title: 'نجاح', description: `تم تعديل بيانات المعلمة ${values.name} بنجاح.` });
       await fetchTeachers();
-      setEditDialogOpen(false);
-      setSelectedTeacher(null);
+      setDialog({ type: null });
     } catch (error) {
        toast({ variant: 'destructive', title: 'فشل التعديل', description: 'حدث خطأ أثناء تعديل البيانات.'});
-    } finally {
-      setIsProcessing(false);
     }
   };
 
-  const handleDeleteTeacher = async () => {
-    if (!selectedTeacher) return;
-    setIsProcessing(true);
+  const handleDelete = async () => {
+    if (!dialog.teacher) return;
     try {
-      await deleteTeacher(selectedTeacher.id);
-      toast({ title: 'نجاح', description: `تم حذف المعلمة ${selectedTeacher.name} بنجاح.` });
+      await deleteTeacher(dialog.teacher.id);
+      toast({ title: 'نجاح', description: `تم حذف المعلمة ${dialog.teacher.name} بنجاح.` });
       await fetchTeachers();
-      setDeleteDialogOpen(false);
-      setSelectedTeacher(null);
+      setDialog({ type: null });
     } catch (error) {
       toast({ variant: 'destructive', title: 'فشل الحذف', description: 'حدث خطأ أثناء حذف المعلمة.'});
-    } finally {
-      setIsProcessing(false);
     }
-  }
+  };
+
+  const openDialog = (type: 'add' | 'edit' | 'delete', teacher?: User) => {
+    if (type === 'edit' && teacher) {
+      editForm.reset({
+        name: teacher.name,
+        email: teacher.email,
+        subject: teacher.subject || '',
+      });
+    } else if (type === 'add') {
+      addForm.reset();
+    }
+    setDialog({ type, teacher });
+  };
+  
+  const isDialogOpen = dialog.type !== null;
+  const closeDialog = () => setDialog({ type: null });
 
   return (
     <div className="space-y-6">
@@ -154,45 +165,10 @@ export default function TeacherManagement({ initialTeachers }: { initialTeachers
                     className="pl-9"
                 />
             </div>
-            <Dialog open={isAddDialogOpen} onOpenChange={setAddDialogOpen}>
-                <DialogTrigger asChild>
-                    <Button size="sm" className="gap-1 w-full sm:w-auto">
-                        <PlusCircle className="h-4 w-4" />
-                        <span>إضافة معلمة جديدة</span>
-                    </Button>
-                </DialogTrigger>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>إضافة معلمة جديدة</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleAddTeacher}>
-                        <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="name" className="text-right">الاسم</Label>
-                                <Input id="name" name="name" className="col-span-3" required />
-                            </div>
-                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="email" className="text-right">البريد</Label>
-                                <Input id="email" name="email" type="email" className="col-span-3" required />
-                            </div>
-                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="password" className="text-right">الرمز</Label>
-                                <Input id="password" name="password" type="password" className="col-span-3" required />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="subject" className="text-right">المادة</Label>
-                                <Input id="subject" name="subject" className="col-span-3" required />
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <Button type="submit" disabled={isProcessing}>
-                              {isProcessing && <Loader2 className="ms-2 h-4 w-4 animate-spin"/>}
-                              إضافة
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+            <Button size="sm" className="gap-1 w-full sm:w-auto" onClick={() => openDialog('add')}>
+                <PlusCircle className="h-4 w-4" />
+                <span>إضافة معلمة جديدة</span>
+            </Button>
         </div>
       <div className="border rounded-lg overflow-hidden">
           <Table>
@@ -234,8 +210,8 @@ export default function TeacherManagement({ initialTeachers }: { initialTeachers
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                             <DropdownMenuLabel>الإجراءات</DropdownMenuLabel>
-                            <DropdownMenuItem onSelect={() => { setSelectedTeacher(teacher); setEditDialogOpen(true); }}>تعديل</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onSelect={() => { setSelectedTeacher(teacher); setDeleteDialogOpen(true); }}>
+                            <DropdownMenuItem onSelect={() => openDialog('edit', teacher)}>تعديل</DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive" onSelect={() => openDialog('delete', teacher)}>
                                 حذف
                             </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -261,57 +237,85 @@ export default function TeacherManagement({ initialTeachers }: { initialTeachers
           </Table>
         </div>
 
-        {/* Edit Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setEditDialogOpen}>
+        {/* Universal Dialog */}
+        <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
             <DialogContent>
-                 <DialogHeader>
-                    <DialogTitle>تعديل بيانات المعلمة</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleEditTeacher}>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="name-edit" className="text-right">الاسم</Label>
-                            <Input id="name-edit" name="name" defaultValue={selectedTeacher?.name} className="col-span-3" required />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="email-edit" className="text-right">البريد</Label>
-                            <Input id="email-edit" name="email" type="email" defaultValue={selectedTeacher?.email} className="col-span-3" required />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="subject-edit" className="text-right">المادة</Label>
-                            <Input id="subject-edit" name="subject" defaultValue={selectedTeacher?.subject} className="col-span-3" required />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button type="submit" disabled={isProcessing}>
-                          {isProcessing && <Loader2 className="ms-2 h-4 w-4 animate-spin"/>}
-                          حفظ التعديلات
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
-
-        {/* Delete Dialog */}
-        <Dialog open={isDeleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>تأكيد الحذف</DialogTitle>
-                    <DialogDescription>
-                        هل أنت متأكد من رغبتك في حذف حساب المعلمة {selectedTeacher?.name}؟ لا يمكن التراجع عن هذا الإجراء.
-                    </DialogDescription>
-                </DialogHeader>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>إلغاء</Button>
-                    <Button variant="destructive" onClick={handleDeleteTeacher} disabled={isProcessing}>
-                       {isProcessing && <Loader2 className="ms-2 h-4 w-4 animate-spin"/>}
-                       حذف
-                    </Button>
-                </DialogFooter>
+                {dialog.type === 'add' && (
+                    <>
+                        <DialogHeader>
+                            <DialogTitle>إضافة معلمة جديدة</DialogTitle>
+                        </DialogHeader>
+                        <Form {...addForm}>
+                            <form onSubmit={addForm.handleSubmit(handleAddSubmit)} className="space-y-4">
+                                <FormField control={addForm.control} name="name" render={({ field }) => (
+                                    <FormItem><FormLabel>الاسم</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                )}/>
+                                <FormField control={addForm.control} name="email" render={({ field }) => (
+                                    <FormItem><FormLabel>البريد الإلكتروني</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
+                                )}/>
+                                <FormField control={addForm.control} name="password" render={({ field }) => (
+                                    <FormItem><FormLabel>كلمة المرور</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>
+                                )}/>
+                                <FormField control={addForm.control} name="subject" render={({ field }) => (
+                                    <FormItem><FormLabel>المادة</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                )}/>
+                                <DialogFooter>
+                                    <Button type="button" variant="ghost" onClick={closeDialog}>إلغاء</Button>
+                                    <Button type="submit" disabled={isProcessing}>
+                                        {isProcessing && <Loader2 className="ms-2 h-4 w-4 animate-spin"/>}
+                                        إضافة
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </Form>
+                    </>
+                )}
+                 {dialog.type === 'edit' && (
+                    <>
+                        <DialogHeader>
+                            <DialogTitle>تعديل بيانات المعلمة</DialogTitle>
+                        </DialogHeader>
+                        <Form {...editForm}>
+                            <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-4">
+                                <FormField control={editForm.control} name="name" render={({ field }) => (
+                                    <FormItem><FormLabel>الاسم</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                )}/>
+                                <FormField control={editForm.control} name="email" render={({ field }) => (
+                                    <FormItem><FormLabel>البريد الإلكتروني</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
+                                )}/>
+                                <FormField control={editForm.control} name="subject" render={({ field }) => (
+                                    <FormItem><FormLabel>المادة</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                )}/>
+                                <DialogFooter>
+                                    <Button type="button" variant="ghost" onClick={closeDialog}>إلغاء</Button>
+                                    <Button type="submit" disabled={isProcessing}>
+                                        {isProcessing && <Loader2 className="ms-2 h-4 w-4 animate-spin"/>}
+                                        حفظ التعديلات
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </Form>
+                    </>
+                )}
+                {dialog.type === 'delete' && (
+                    <>
+                        <DialogHeader>
+                            <DialogTitle>تأكيد الحذف</DialogTitle>
+                            <DialogDescription>
+                                هل أنت متأكد من رغبتك في حذف حساب المعلمة {dialog.teacher?.name}؟ لا يمكن التراجع عن هذا الإجراء.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                            <Button variant="ghost" onClick={closeDialog}>إلغاء</Button>
+                            <Button variant="destructive" onClick={handleDelete} disabled={isProcessing}>
+                               {isProcessing && <Loader2 className="ms-2 h-4 w-4 animate-spin"/>}
+                               حذف
+                            </Button>
+                        </DialogFooter>
+                    </>
+                )}
             </DialogContent>
         </Dialog>
     </div>
   );
 }
-
-    
