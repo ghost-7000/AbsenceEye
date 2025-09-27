@@ -26,7 +26,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getUser, updateUser, updatePassword } from '@/app/actions/auth-actions';
-import type { User } from '@/lib/types';
+import type { Teacher } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const profileSchema = z.object({
@@ -48,7 +48,7 @@ export default function TeacherProfilePage() {
   const [isSaving, setIsSaving] = React.useState(false);
   const [isSavingPassword, setIsSavingPassword] = React.useState(false);
 
-  const [user, setUser] = React.useState<User | null>(null);
+  const [user, setUser] = React.useState<Teacher | null>(null);
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -69,8 +69,9 @@ export default function TeacherProfilePage() {
       setLoading(true);
       const userId = localStorage.getItem('userId');
       if (userId) {
-        const fetchedUser = await getUser(userId);
-        setUser(fetchedUser);
+        // We know this is the teacher profile page
+        const fetchedUser = await getUser(userId, 'teacher');
+        setUser(fetchedUser as Teacher);
         form.reset({
           name: fetchedUser.name,
           email: fetchedUser.email,
@@ -97,13 +98,13 @@ export default function TeacherProfilePage() {
     setIsSaving(true);
     
     try {
-      const updatedUser = await updateUser(user.id, { 
+      const updatedUser = await updateUser(user.id, 'teacher', { 
         name: values.name, 
         email: values.email, 
         avatarDataUrl: avatarPreview 
       });
 
-      setUser(updatedUser);
+      setUser(updatedUser as Teacher);
       localStorage.setItem('userName', updatedUser.name);
       localStorage.setItem('userEmail', updatedUser.email);
       if (updatedUser.avatarUrl) {
@@ -131,7 +132,7 @@ export default function TeacherProfilePage() {
     if (!user) return;
     setIsSavingPassword(true);
     try {
-      await updatePassword(user.id, values.password);
+      await updatePassword(user.id, 'teacher', values.password);
       toast({
         title: 'تم تحديث كلمة المرور',
         description: 'تم تغيير كلمة المرور بنجاح.',

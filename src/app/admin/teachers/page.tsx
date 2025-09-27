@@ -7,9 +7,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import type { Teacher } from "@/lib/types";
 
 export default async function AdminTeachersPage() {
-    const initialTeachers = await getTeachers();
+    const initialTeachers: Teacher[] = await getTeachers();
     return (
         <Card>
             <CardHeader>

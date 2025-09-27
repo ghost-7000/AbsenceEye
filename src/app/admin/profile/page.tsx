@@ -70,8 +70,9 @@ export default function AdminProfilePage() {
       setLoading(true);
       const userId = localStorage.getItem('userId');
       if (userId) {
-        const fetchedUser = await getUser(userId);
-        setUser(fetchedUser);
+        // We know this is the admin profile page
+        const fetchedUser = await getUser(userId, 'admin');
+        setUser(fetchedUser as User);
         form.reset({
           name: fetchedUser.name,
           email: fetchedUser.email,
@@ -98,13 +99,13 @@ export default function AdminProfilePage() {
     setIsSaving(true);
     
     try {
-      const updatedUser = await updateUser(user.id, { 
+      const updatedUser = await updateUser(user.id, 'admin', { 
         name: values.name, 
         email: values.email, 
         avatarDataUrl: avatarPreview 
       });
 
-      setUser(updatedUser);
+      setUser(updatedUser as User);
       localStorage.setItem('userName', updatedUser.name);
       localStorage.setItem('userEmail', updatedUser.email);
       if (updatedUser.avatarUrl) {
@@ -132,7 +133,7 @@ export default function AdminProfilePage() {
     if (!user) return;
     setIsSavingPassword(true);
     try {
-      await updatePassword(user.id, values.password);
+      await updatePassword(user.id, 'admin', values.password);
       toast({
         title: 'تم تحديث كلمة المرور',
         description: 'تم تغيير كلمة المرور بنجاح.',

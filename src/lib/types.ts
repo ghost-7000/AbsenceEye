@@ -6,10 +6,20 @@ export type User = {
   name: string;
   email: string;
   password?: string;
-  role: 'admin' | 'teacher';
+  role: 'admin'; // Role is now fixed to 'admin' for this type
+  avatarUrl: string;
+};
+
+export type Teacher = {
+  _id: Types.ObjectId;
+  id: string;
+  name: string;
+  email: string;
+  password?: string;
+  role: 'teacher';
   avatarUrl: string;
   subject?: string;
-};
+}
 
 export type Class = {
   _id: Types.ObjectId;

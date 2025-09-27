@@ -14,7 +14,6 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   DropdownMenu,
@@ -40,7 +39,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { User } from '@/lib/types';
+import type { Teacher } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { getTeachers, addTeacher, updateTeacher, deleteTeacher } from '@/app/actions/admin-actions';
@@ -61,16 +60,16 @@ const editTeacherSchema = z.object({
   subject: z.string().min(2, { message: 'المادة مطلوبة' }),
 });
 
-export default function TeacherManagement({ initialTeachers }: { initialTeachers: User[]}) {
+export default function TeacherManagement({ initialTeachers }: { initialTeachers: Teacher[]}) {
   const { toast } = useToast();
-  const [teachers, setTeachers] = React.useState<User[]>(initialTeachers);
+  const [teachers, setTeachers] = React.useState<Teacher[]>(initialTeachers);
   const [searchTerm, setSearchTerm] = React.useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   
   // State for controlling dialogs
   const [dialog, setDialog] = React.useState<{
     type: 'add' | 'edit' | 'delete' | null;
-    teacher?: User;
+    teacher?: Teacher;
   }>({ type: null });
 
   const addForm = useForm<z.infer<typeof addTeacherSchema>>({
@@ -137,7 +136,7 @@ export default function TeacherManagement({ initialTeachers }: { initialTeachers
     }
   };
 
-  const openDialog = (type: 'add' | 'edit' | 'delete', teacher?: User) => {
+  const openDialog = (type: 'add' | 'edit' | 'delete', teacher?: Teacher) => {
     if (type === 'edit' && teacher) {
       editForm.reset({
         name: teacher.name,
