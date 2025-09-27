@@ -35,6 +35,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { getTeachers, addTeacher, updateTeacher, deleteTeacher } from '@/app/actions/admin-actions';
 import { useDebounce } from '@/hooks/use-debounce';
+import { Badge } from '@/components/ui/badge';
 
 export default function TeacherManagement({ initialTeachers }: { initialTeachers: User[]}) {
   const { toast } = useToast();
@@ -61,7 +62,8 @@ export default function TeacherManagement({ initialTeachers }: { initialTeachers
     teachers.filter(
         teacher =>
         teacher.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        teacher.email.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+        teacher.email.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        (teacher.subject && teacher.subject.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
     ), [teachers, debouncedSearchTerm]);
 
 
@@ -73,8 +75,9 @@ export default function TeacherManagement({ initialTeachers }: { initialTeachers
     const name = formData.get('name') as string;
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
+    const subject = formData.get('subject') as string;
     
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !subject) {
         toast({ variant: 'destructive', title: 'خطأ', description: 'الرجاء ملء جميع الحقول.' });
         setIsProcessing(false);
         return;
@@ -87,7 +90,7 @@ export default function TeacherManagement({ initialTeachers }: { initialTeachers
     }
 
     try {
-      await addTeacher(name, email, password);
+      await addTeacher(name, email, password, subject);
       toast({ title: 'نجاح', description: `تمت إضافة المعلمة ${name} بنجاح.` });
       await fetchTeachers(); 
       setAddDialogOpen(false);
@@ -108,9 +111,10 @@ export default function TeacherManagement({ initialTeachers }: { initialTeachers
     const formData = new FormData(form);
     const name = formData.get('name') as string;
     const email = formData.get('email') as string;
+    const subject = formData.get('subject') as string;
 
     try {
-      await updateTeacher(selectedTeacher.id, name, email);
+      await updateTeacher(selectedTeacher.id, name, email, subject);
       toast({ title: 'نجاح', description: `تم تعديل بيانات المعلمة ${name} بنجاح.` });
       await fetchTeachers();
       setEditDialogOpen(false);
@@ -144,7 +148,7 @@ export default function TeacherManagement({ initialTeachers }: { initialTeachers
             <div className="relative w-full sm:max-w-xs">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
-                    placeholder="بحث بالاسم أو البريد..."
+                    placeholder="بحث بالاسم، البريد، أو المادة..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-9"
@@ -175,6 +179,10 @@ export default function TeacherManagement({ initialTeachers }: { initialTeachers
                                 <Label htmlFor="password" className="text-right">الرمز</Label>
                                 <Input id="password" name="password" type="password" className="col-span-3" required />
                             </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="subject" className="text-right">المادة</Label>
+                                <Input id="subject" name="subject" className="col-span-3" required />
+                            </div>
                         </div>
                         <DialogFooter>
                             <Button type="submit" disabled={isProcessing}>
@@ -191,6 +199,7 @@ export default function TeacherManagement({ initialTeachers }: { initialTeachers
             <TableHeader>
               <TableRow>
                 <TableHead>الاسم</TableHead>
+                <TableHead>المادة</TableHead>
                 <TableHead className="hidden sm:table-cell">البريد الإلكتروني</TableHead>
                 <TableHead>
                   <span className="sr-only">الإجراءات</span>
@@ -209,6 +218,9 @@ export default function TeacherManagement({ initialTeachers }: { initialTeachers
                         </Avatar>
                         {teacher.name}
                       </div>
+                    </TableCell>
+                     <TableCell>
+                      {teacher.subject ? <Badge variant="outline">{teacher.subject}</Badge> : 'غير محدد'}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">{teacher.email}</TableCell>
                     <TableCell>
@@ -234,7 +246,7 @@ export default function TeacherManagement({ initialTeachers }: { initialTeachers
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={3} className="h-48 text-center">
+                  <TableCell colSpan={4} className="h-48 text-center">
                     <div className="flex flex-col items-center gap-4">
                         <Users className="h-12 w-12 text-muted-foreground" />
                         <h3 className="font-semibold">لم يتم العثور على معلمات</h3>
@@ -264,6 +276,10 @@ export default function TeacherManagement({ initialTeachers }: { initialTeachers
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="email-edit" className="text-right">البريد</Label>
                             <Input id="email-edit" name="email" type="email" defaultValue={selectedTeacher?.email} className="col-span-3" required />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="subject-edit" className="text-right">المادة</Label>
+                            <Input id="subject-edit" name="subject" defaultValue={selectedTeacher?.subject} className="col-span-3" required />
                         </div>
                     </div>
                     <DialogFooter>

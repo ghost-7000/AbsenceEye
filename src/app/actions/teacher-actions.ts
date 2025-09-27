@@ -34,9 +34,9 @@ export async function getTeacherClassesAndStudents(teacherId: string): Promise<C
     return JSON.parse(JSON.stringify(classesWithStudents));
 }
 
-export async function addClass(name: string, teacherId: string) {
+export async function addClass(name: string, subject: string, teacherId: string) {
     await dbConnect();
-    const newClass = new ClassModel({ name, teacherId });
+    const newClass = new ClassModel({ name, subject, teacherId });
     await newClass.save();
     revalidatePath('/teacher/classes');
 }

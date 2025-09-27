@@ -23,6 +23,7 @@ async function ensureAdminAndTeacherExist() {
         email: 'teacher@example.com',
         password: 'password123', // In a real app, this should be hashed
         role: 'teacher',
+        subject: 'لغة عربية',
         avatarUrl: 'https://picsum.photos/seed/teacher1/200/200',
       });
        console.log('Teacher user created.');
@@ -65,11 +66,13 @@ export async function seedDatabase() {
     const classA = await ClassModel.create({
         name: 'الصف الأول - أ',
         teacherId: teacher._id.toString(),
+        subject: 'لغة عربية',
         note: 'ملاحظات أولية حول الصف الأول - أ.'
     });
     const classB = await ClassModel.create({
         name: 'الصف الأول - ب',
         teacherId: teacher._id.toString(),
+        subject: 'لغة عربية',
         note: 'ملاحظات أولية حول الصف الأول - ب.'
     });
     console.log('Classes created.');

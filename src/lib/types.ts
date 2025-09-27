@@ -8,6 +8,7 @@ export type User = {
   password?: string;
   role: 'admin' | 'teacher';
   avatarUrl: string;
+  subject?: string;
 };
 
 export type Class = {
@@ -15,6 +16,7 @@ export type Class = {
   id: string;
   name: string;
   teacherId: string;
+  subject?: string;
   note?: string;
 };
 

@@ -34,6 +34,7 @@ export default function ClassManagement({ initialClasses }: { initialClasses: Cl
         <TableHeader>
           <TableRow>
             <TableHead>اسم الصف</TableHead>
+            <TableHead>المادة</TableHead>
             <TableHead>المعلمة المسؤولة</TableHead>
             <TableHead className="text-center">عدد الطلاب</TableHead>
           </TableRow>
@@ -42,6 +43,7 @@ export default function ClassManagement({ initialClasses }: { initialClasses: Cl
           {classes.map((cls) => (
             <TableRow key={cls.id}>
               <TableCell className="font-medium">{cls.name}</TableCell>
+              <TableCell>{cls.subject ? <Badge variant="outline">{cls.subject}</Badge> : 'غير محدد'}</TableCell>
               <TableCell>{cls.teacherName}</TableCell>
               <TableCell className="text-center">
                 <Badge variant="secondary">{cls.studentCount}</Badge>

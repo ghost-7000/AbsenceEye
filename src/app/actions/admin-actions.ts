@@ -60,14 +60,14 @@ export async function getTeachers(): Promise<User[]> {
     return JSON.parse(JSON.stringify(teachers.map(t => ({...t, id: t._id.toString()}))));
 }
 
-export async function addTeacher(name: string, email: string, password: string) {
+export async function addTeacher(name: string, email: string, password: string, subject: string) {
     await dbConnect();
-    // In a real app, you would also set a default password and handle email verification
     const newTeacher = new UserModel({
         name,
         email,
-        password: password,
+        password: password, // In a real app, you would hash this
         role: 'teacher',
+        subject,
         avatarUrl: ''
     });
     await newTeacher.save();
@@ -75,9 +75,9 @@ export async function addTeacher(name: string, email: string, password: string) 
     revalidatePath('/admin/dashboard');
 }
 
-export async function updateTeacher(teacherId: string, name: string, email: string) {
+export async function updateTeacher(teacherId: string, name: string, email: string, subject: string) {
     await dbConnect();
-    await UserModel.findByIdAndUpdate(teacherId, { name, email });
+    await UserModel.findByIdAndUpdate(teacherId, { name, email, subject });
     revalidatePath('/admin/teachers');
 }
 
@@ -150,22 +150,10 @@ export async function getClassesWithStudentCounts(): Promise<ClassWithStudentCou
     const validTeacherIds = [...new Set(classes.map(c => c.teacherId))]
       .filter(id => mongoose.Types.ObjectId.isValid(id));
       
-    if (validTeacherIds.length === 0) {
-        // Handle case where there are no valid teacher IDs to prevent a crash
-        const result: ClassWithStudentCount[] = [];
-        for (const cls of classes) {
-            const studentCount = await StudentModel.countDocuments({ classId: cls._id.toString() });
-            result.push({
-                ...cls,
-                id: cls._id.toString(),
-                studentCount,
-                teacherName: 'غير معين',
-            });
-        }
-        return JSON.parse(JSON.stringify(result));
-    }
-
-    const teachers = await UserModel.find({ _id: { $in: validTeacherIds } }).lean();
+    const teachers = validTeacherIds.length > 0
+        ? await UserModel.find({ _id: { $in: validTeacherIds } }).lean()
+        : [];
+        
     const teacherMap = new Map(teachers.map(t => [t._id.toString(), t.name]));
 
     const result: ClassWithStudentCount[] = [];

@@ -7,11 +7,13 @@ const UserSchema = new Schema<User>({
     password: { type: String, required: true },
     role: { type: String, enum: ['admin', 'teacher'], required: true },
     avatarUrl: { type: String },
+    subject: { type: String },
 });
 
 const ClassSchema = new Schema<Class>({
     name: { type: String, required: true },
     teacherId: { type: String, required: true },
+    subject: { type: String },
     note: { type: String },
 });
 

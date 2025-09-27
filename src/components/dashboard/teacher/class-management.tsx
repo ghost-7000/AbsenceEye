@@ -87,14 +87,15 @@ export default function ClassManagement() {
     const form = event.currentTarget;
     const formData = new FormData(form);
     const name = formData.get('className') as string;
+    const subject = formData.get('subject') as string;
 
-    if (!name) {
-      toast({ variant: 'destructive', title: 'خطأ', description: 'الرجاء إدخال اسم الصف.' });
+    if (!name || !subject) {
+      toast({ variant: 'destructive', title: 'خطأ', description: 'الرجاء إدخال اسم الصف والمادة.' });
       setIsProcessing(false);
       return;
     }
     try {
-      await addClass(name, teacherId);
+      await addClass(name, subject, teacherId);
       toast({ title: 'نجاح', description: `تم إنشاء صف "${name}" بنجاح.` });
       setAddClassOpen(false);
       form.reset();
@@ -225,7 +226,11 @@ export default function ClassManagement() {
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="className" className="text-right">اسم الصف</Label>
-                            <Input id="className" name="className" className="col-span-3" placeholder="مثال: الصف الأول - ج"/>
+                            <Input id="className" name="className" className="col-span-3" placeholder="مثال: الصف الأول - ج" required/>
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="subject" className="text-right">المادة</Label>
+                            <Input id="subject" name="subject" className="col-span-3" placeholder="مثال: لغة عربية" required/>
                         </div>
                     </div>
                     <DialogFooter>
@@ -263,8 +268,9 @@ export default function ClassManagement() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                  <CardDescription>
+                  <CardDescription className="flex items-center gap-2">
                     <Badge variant="secondary">{c.students.length} طالب</Badge>
+                    {c.subject && <Badge variant="outline">{c.subject}</Badge>}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow">
