@@ -2,14 +2,12 @@ import { Users, School, UserCheck, BarChart3, Users2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { StatsCard } from '@/components/dashboard/stats-card';
 import { getAdminStats, getClassesWithStudentCounts } from '@/app/actions/admin-actions';
-import { StudentDistributionChart } from '@/components/dashboard/admin/student-distribution-chart';
 import MostAbsentStudents from '@/components/dashboard/admin/most-absent-students';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 export default async function AdminDashboardPage() {
   const { totalTeachers, totalClasses, totalStudents } = await getAdminStats();
-  const classData = await getClassesWithStudentCounts();
 
   return (
     <div className="grid gap-6">
@@ -40,19 +38,8 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Charts and Lists */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-        <Card className="lg:col-span-3">
-          <CardHeader>
-            <CardTitle>توزيع الطلاب على الصفوف</CardTitle>
-            <CardDescription>عرض بياني لعدد الطلاب في كل صف دراسي.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <StudentDistributionChart data={classData} />
-          </CardContent>
-        </Card>
-        <div className="lg:col-span-2">
-            <MostAbsentStudents />
-        </div>
+      <div className="grid grid-cols-1 gap-6">
+        <MostAbsentStudents />
       </div>
 
        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
