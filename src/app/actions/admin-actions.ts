@@ -1,8 +1,8 @@
 'use server'
 
 import dbConnect from "@/lib/mongodb";
-import { AttendanceRecordModel, StudentModel, ClassModel, UserModel, TeacherModel } from "@/lib/models";
-import type { Student, Teacher, AttendanceRecord, Class } from "@/lib/types";
+import { AttendanceRecordModel, StudentModel, ClassModel, UserModel } from "@/lib/models";
+import type { Student, Teacher, AttendanceRecord, Class, User } from "@/lib/types";
 import { revalidatePath } from "next/cache";
 import mongoose from "mongoose";
 
@@ -59,11 +59,12 @@ export async function getMostAbsentStudents(): Promise<AbsentStudent[]> {
 
 export async function getTeachers(): Promise<Teacher[]> {
     await dbConnect();
-    const teachers: Teacher[] = await TeacherModel.find({}).lean();
+    const teachers: User[] = await UserModel.find({ role: 'teacher' }).lean();
     return teachers.map(t => ({
         ...t, 
         id: t._id.toString(),
-        _id: t._id.toString(),
+        _id: t._id,
+        role: 'teacher',
         subject: t.subject || 'غير محدد'
     }));
 }
@@ -71,7 +72,7 @@ export async function getTeachers(): Promise<Teacher[]> {
 export async function addTeacher(data: { name: string, email: string, password: string, subject: string }) {
     await dbConnect();
     const { name, email, password, subject } = data;
-    const newTeacher = new TeacherModel({
+    const newTeacher = new UserModel({
         name,
         email,
         password: password, // In a real app, you would hash this
@@ -86,13 +87,13 @@ export async function addTeacher(data: { name: string, email: string, password: 
 
 export async function updateTeacher(teacherId: string, data: { name: string, email: string, subject: string }) {
     await dbConnect();
-    await TeacherModel.findByIdAndUpdate(teacherId, data);
+    await UserModel.findByIdAndUpdate(teacherId, data);
     revalidatePath('/admin/teachers');
 }
 
 export async function deleteTeacher(teacherId: string) {
     await dbConnect();
-    await TeacherModel.findByIdAndDelete(teacherId);
+    await UserModel.findByIdAndDelete(teacherId);
     revalidatePath('/admin/teachers');
     revalidatePath('/admin/dashboard');
 }
@@ -100,7 +101,7 @@ export async function deleteTeacher(teacherId: string) {
 export async function getAdminStats() {
     await dbConnect();
     const [totalTeachers, totalClasses, totalStudents] = await Promise.all([
-      TeacherModel.countDocuments(),
+      UserModel.countDocuments({ role: 'teacher' }),
       ClassModel.countDocuments(),
       StudentModel.countDocuments()
     ]);
@@ -174,8 +175,8 @@ export async function getClassesWithStudentCounts(): Promise<ClassWithStudentCou
       .filter(id => mongoose.Types.ObjectId.isValid(id))
       .map(id => new mongoose.Types.ObjectId(id));
       
-    const teachers: Teacher[] = validTeacherIds.length > 0
-        ? await TeacherModel.find({ _id: { $in: validTeacherIds } }).lean()
+    const teachers: User[] = validTeacherIds.length > 0
+        ? await UserModel.find({ _id: { $in: validTeacherIds }, role: 'teacher' }).lean()
         : [];
         
     const teacherMap = new Map(teachers.map(t => [t._id.toString(), t.name]));

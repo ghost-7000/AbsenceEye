@@ -1,8 +1,8 @@
 'use server'
 
 import dbConnect from "@/lib/mongodb";
-import { ClassModel, StudentModel, AttendanceRecordModel, TeacherModel } from "@/lib/models";
-import type { Class, Student, Teacher, AttendanceRecord, AttendanceStatus } from "@/lib/types";
+import { ClassModel, StudentModel, AttendanceRecordModel, UserModel } from "@/lib/models";
+import type { Class, Student, Teacher, AttendanceRecord, User } from "@/lib/types";
 import { revalidatePath } from "next/cache";
 import { format } from "date-fns";
 import type { DetailedAttendanceRecord as AdminDetailedAttendanceRecord } from "./admin-actions";
@@ -14,8 +14,8 @@ export type ClassWithStudents = Omit<Class, '_id'|'teacherId'> & { id: string; t
 
 export async function getTeacherData(teacherId: string): Promise<Teacher> {
     await dbConnect();
-    const user = await TeacherModel.findById(teacherId).lean();
-    if (!user) throw new Error('Teacher not found');
+    const user = await UserModel.findById(teacherId).lean();
+    if (!user || user.role !== 'teacher') throw new Error('Teacher not found');
     const { _id, ...userWithoutId } = user;
     return { ...userWithoutId, id: _id.toString(), role: 'teacher' };
 }

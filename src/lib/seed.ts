@@ -1,8 +1,8 @@
-import { UserModel, TeacherModel, ClassModel, StudentModel, AttendanceRecordModel } from './models';
+import { UserModel, ClassModel, StudentModel, AttendanceRecordModel } from './models';
 import { format, subDays } from 'date-fns';
 
 async function ensureAdminAndTeacherExist() {
-    const adminExists = await UserModel.findOne({ role: 'admin' });
+    const adminExists = await UserModel.findOne({ email: 'admin@example.com' });
     if (!adminExists) {
       console.log('Admin user not found, creating one...');
       await UserModel.create({
@@ -15,10 +15,10 @@ async function ensureAdminAndTeacherExist() {
       console.log('Admin user created.');
     }
 
-    const teacherExists = await TeacherModel.findOne({ email: 'teacher@example.com' });
+    const teacherExists = await UserModel.findOne({ email: 'teacher@example.com' });
      if (!teacherExists) {
       console.log('Teacher user not found, creating one...');
-      await TeacherModel.create({
+      await UserModel.create({
         name: 'المعلمة نورة',
         email: 'teacher@example.com',
         password: 'password123', // In a real app, this should be hashed
@@ -50,13 +50,13 @@ export async function seedDatabase() {
     
     console.log('Database is empty or partially seeded, seeding with initial data...');
 
-    // Clear collections to ensure a clean slate, except for users/teachers
+    // Clear collections to ensure a clean slate, except for users
     await ClassModel.deleteMany({});
     await StudentModel.deleteMany({});
     await AttendanceRecordModel.deleteMany({});
     console.log('Cleared existing class, student, and attendance data.');
 
-    const teacher = await TeacherModel.findOne({ email: 'teacher@example.com' });
+    const teacher = await UserModel.findOne({ email: 'teacher@example.com' });
     if (!teacher) {
         console.error("Default teacher not found after seeding users. Aborting student/class seeding.");
         return;
