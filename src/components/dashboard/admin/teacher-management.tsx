@@ -72,15 +72,22 @@ export default function TeacherManagement({ initialTeachers }: { initialTeachers
     const formData = new FormData(form);
     const name = formData.get('name') as string;
     const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
     
-    if (!name || !email) {
+    if (!name || !email || !password) {
         toast({ variant: 'destructive', title: 'خطأ', description: 'الرجاء ملء جميع الحقول.' });
+        setIsProcessing(false);
+        return;
+    }
+    
+    if (password.length < 6) {
+        toast({ variant: 'destructive', title: 'خطأ', description: 'يجب أن تكون كلمة المرور 6 أحرف على الأقل.' });
         setIsProcessing(false);
         return;
     }
 
     try {
-      await addTeacher(name, email);
+      await addTeacher(name, email, password);
       toast({ title: 'نجاح', description: `تمت إضافة المعلمة ${name} بنجاح.` });
       await fetchTeachers(); 
       setAddDialogOpen(false);
@@ -163,6 +170,10 @@ export default function TeacherManagement({ initialTeachers }: { initialTeachers
                              <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="email" className="text-right">البريد</Label>
                                 <Input id="email" name="email" type="email" className="col-span-3" required />
+                            </div>
+                             <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="password" className="text-right">الرمز</Label>
+                                <Input id="password" name="password" type="password" className="col-span-3" required />
                             </div>
                         </div>
                         <DialogFooter>

@@ -60,13 +60,13 @@ export async function getTeachers(): Promise<User[]> {
     return JSON.parse(JSON.stringify(teachers.map(t => ({...t, id: t._id.toString()}))));
 }
 
-export async function addTeacher(name: string, email: string) {
+export async function addTeacher(name: string, email: string, password: string) {
     await dbConnect();
     // In a real app, you would also set a default password and handle email verification
     const newTeacher = new UserModel({
         name,
         email,
-        password: 'password123', // Demo password
+        password: password,
         role: 'teacher',
         avatarUrl: ''
     });
