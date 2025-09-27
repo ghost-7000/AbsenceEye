@@ -7,7 +7,7 @@ const UserSchema = new Schema<User>({
     password: { type: String, required: true },
     role: { type: String, enum: ['admin', 'teacher'], required: true },
     avatarUrl: { type: String },
-    subject: { type: String }, // This line ensures the subject is part of the schema
+    subject: { type: String },
 });
 
 const ClassSchema = new Schema<Class>({
@@ -32,7 +32,7 @@ const AttendanceRecordSchema = new Schema<AttendanceRecord>({
 });
 
 // Index for faster queries on attendance
-AttendanceRecordSchema.index({ studentId: 1, classId: 1, date: 1 }, { unique: true });
+AttendanceRecordSchema.index({ studentId: 1, classId: 1, date: 1 });
 AttendanceRecordSchema.index({ classId: 1, date: 1 });
 AttendanceRecordSchema.index({ date: 1 });
 
