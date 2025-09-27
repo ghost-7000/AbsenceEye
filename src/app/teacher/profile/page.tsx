@@ -73,7 +73,7 @@ export default function TeacherProfilePage() {
       const userRole = localStorage.getItem('userRole');
 
       if (userId && (userRole === 'admin' || userRole === 'teacher')) {
-        const fetchedUser = await getUser(userId, userRole);
+        const fetchedUser = await getUser(userId, userRole as 'admin' | 'teacher');
         if (fetchedUser) {
             setUser(fetchedUser);
             form.reset({
@@ -103,7 +103,7 @@ export default function TeacherProfilePage() {
     setIsSaving(true);
     
     try {
-      const updatedUser = await updateUser(user.id, user.role, { 
+      const updatedUser = await updateUser(user.id, user.role as 'admin' | 'teacher', { 
         name: values.name, 
         email: values.email, 
         avatarDataUrl: avatarPreview 
@@ -137,7 +137,7 @@ export default function TeacherProfilePage() {
     if (!user) return;
     setIsSavingPassword(true);
     try {
-      await updatePassword(user.id, user.role, values.password);
+      await updatePassword(user.id, user.role as 'admin' | 'teacher', values.password);
       toast({
         title: 'تم تحديث كلمة المرور',
         description: 'تم تغيير كلمة المرور بنجاح.',
@@ -209,7 +209,7 @@ export default function TeacherProfilePage() {
                     <Upload className="mr-2 h-4 w-4" />
                     تغيير الصورة
                   </Button>
-                  <Input -
+                  <Input
                     ref={fileInputRef}
                     type="file" 
                     className="hidden" 
