@@ -143,7 +143,7 @@ export async function getDetailedAttendanceRecords(): Promise<DetailedAttendance
                 classId: record.classId.toString(),
                 date: record.date,
                 status: record.status,
-                timestamp: record.timestamp.toISOString(),
+                timestamp: record.timestamp ? record.timestamp.toISOString() : new Date(record.date).toISOString(),
                 studentName: studentName,
                 className: classInfo.name,
                 subject: classInfo.subject,

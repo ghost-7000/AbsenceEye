@@ -126,7 +126,7 @@ export async function getAttendanceForDate(teacherId: string, date: string): Pro
         classId: rec.classId.toString(),
         date: rec.date,
         status: rec.status,
-        timestamp: rec.timestamp.toISOString(),
+        timestamp: rec.timestamp ? rec.timestamp.toISOString() : new Date(rec.date).toISOString(),
     }));
 }
 
@@ -193,7 +193,7 @@ export async function getDetailedAttendanceForTeacher(teacherId: string): Promis
                 classId: record.classId.toString(),
                 date: record.date,
                 status: record.status,
-                timestamp: record.timestamp.toISOString(),
+                timestamp: record.timestamp ? record.timestamp.toISOString() : new Date(record.date).toISOString(),
                 studentName: studentName,
                 className: classInfo.name,
                 subject: classInfo.subject,
