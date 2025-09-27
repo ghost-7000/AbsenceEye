@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { getDetailedAttendanceForTeacher, getTeacherClassesAndStudents } from '@/app/actions/teacher-actions';
-import type { DetailedAttendanceRecord } from '@/app/actions/admin-actions';
+import type { DetailedAttendanceRecord } from '@/app/actions/teacher-actions';
 import { Loader2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Label } from '@/components/ui/label';
@@ -63,6 +63,7 @@ export default function TeacherRecordsTable() {
       const teacherId = localStorage.getItem('userId');
       if (!teacherId) {
         console.error('Teacher ID not found');
+        setLoading(false);
         return;
       }
       const [classesData, recordsData] = await Promise.all([
@@ -168,7 +169,7 @@ export default function TeacherRecordsTable() {
                       {filteredRecords.map(record => (
                         <TableRow key={record.id}>
                           <TableCell className="font-medium">{record.studentName}</TableCell>
-                           {selectedClassSubject && <TableCell><Badge variant="outline">{selectedClassSubject}</Badge></TableCell>}
+                           {selectedClassSubject && <TableCell><Badge variant="outline">{record.subject || 'غير محدد'}</Badge></TableCell>}
                           <TableCell className="text-center">
                             <Badge variant={record.status === 'present' ? 'secondary' : 'destructive'}>
                               {record.status === 'present' ? 'حاضر' : 'غائب'}

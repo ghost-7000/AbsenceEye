@@ -2,36 +2,48 @@
 
 import dbConnect from "@/lib/mongodb";
 import { ClassModel, StudentModel, AttendanceRecordModel, UserModel } from "@/lib/models";
-import type { Class, Student, User, AttendanceRecord } from "@/lib/types";
+import type { Class, Student, User, AttendanceRecord, AttendanceStatus } from "@/lib/types";
 import { revalidatePath } from "next/cache";
 import { format } from "date-fns";
-import type { DetailedAttendanceRecord } from "./admin-actions";
+import type { DetailedAttendanceRecord as AdminDetailedAttendanceRecord } from "./admin-actions";
+
+export type DetailedAttendanceRecord = AdminDetailedAttendanceRecord;
 
 // This is a helper type for the client component
-export type ClassWithStudents = Class & { students: Student[] };
+export type ClassWithStudents = Omit<Class, '_id'|'teacherId'> & { id: string; teacherId: string; students: (Omit<Student, '_id'|'classId'> & { id: string; classId: string; })[] };
 
-export async function getTeacherData(teacherId: string) {
+export async function getTeacherData(teacherId: string): Promise<User> {
+    await dbConnect();
     const user = await UserModel.findById(teacherId).lean();
     if (!user) throw new Error('Teacher not found');
-    return JSON.parse(JSON.stringify(user)) as User;
+    const { _id, ...userWithoutId } = user;
+    return { ...userWithoutId, id: _id.toString() };
 }
 
 export async function getTeacherClassesAndStudents(teacherId: string): Promise<ClassWithStudents[]> {
     await dbConnect();
-    const classes = await ClassModel.find({ teacherId }).lean();
+    const classes: Class[] = await ClassModel.find({ teacherId }).lean();
     
     const classesWithStudents: ClassWithStudents[] = [];
 
     for (const cls of classes) {
-        const students = await StudentModel.find({ classId: cls._id.toString() }).sort({ name: 1 }).lean();
+        const students: Student[] = await StudentModel.find({ classId: cls._id.toString() }).sort({ name: 1 }).lean();
         classesWithStudents.push({
-            ...cls,
             id: cls._id.toString(),
-            students: students.map(s => ({...s, id: s._id.toString()})),
+            name: cls.name,
+            teacherId: cls.teacherId.toString(),
+            subject: cls.subject,
+            note: cls.note,
+            students: students.map(s => ({
+                id: s._id.toString(),
+                name: s.name,
+                avatarUrl: s.avatarUrl,
+                classId: s.classId.toString(),
+            })),
         });
     }
     
-    return JSON.parse(JSON.stringify(classesWithStudents));
+    return classesWithStudents;
 }
 
 export async function addClass(name: string, subject: string, teacherId: string) {
@@ -98,17 +110,24 @@ export async function saveAttendance(records: AttendanceData[]) {
 
 }
 
-export async function getAttendanceForDate(teacherId: string, date: string) {
+export async function getAttendanceForDate(teacherId: string, date: string): Promise<Omit<AttendanceRecord, '_id'|'studentId'|'classId'|'timestamp'> & {id: string, studentId:string, classId:string, timestamp: string}[]> {
     await dbConnect();
     const teacherClasses = await ClassModel.find({ teacherId }).select('_id');
     const classIds = teacherClasses.map(c => c._id.toString());
     
-    const attendance = await AttendanceRecordModel.find({ 
+    const attendance: AttendanceRecord[] = await AttendanceRecordModel.find({ 
         classId: { $in: classIds },
         date: date 
     }).lean();
 
-    return JSON.parse(JSON.stringify(attendance));
+    return attendance.map(rec => ({
+        id: rec._id.toString(),
+        studentId: rec.studentId.toString(),
+        classId: rec.classId.toString(),
+        date: rec.date,
+        status: rec.status,
+        timestamp: rec.timestamp.toISOString(),
+    }));
 }
 
 
@@ -158,7 +177,7 @@ export async function getDetailedAttendanceForTeacher(teacherId: string): Promis
     
     const studentIds = records.map(r => r.studentId);
     
-    const students = await StudentModel.find({ _id: { $in: studentIds } }).lean();
+    const students: Student[] = await StudentModel.find({ _id: { $in: studentIds } }).lean();
     
     const studentMap = new Map(students.map(s => [s._id.toString(), s.name]));
     const classMap = new Map(teacherClasses.map(c => [c._id.toString(), {name: c.name, subject: c.subject}]));
@@ -169,8 +188,12 @@ export async function getDetailedAttendanceForTeacher(teacherId: string): Promis
 
         if (studentName && classInfo) {
              return {
-                ...record,
                 id: record._id.toString(),
+                studentId: record.studentId.toString(),
+                classId: record.classId.toString(),
+                date: record.date,
+                status: record.status,
+                timestamp: record.timestamp.toISOString(),
                 studentName: studentName,
                 className: classInfo.name,
                 subject: classInfo.subject,
@@ -180,5 +203,5 @@ export async function getDetailedAttendanceForTeacher(teacherId: string): Promis
     }).filter((r): r is DetailedAttendanceRecord => r !== null);
 
 
-    return JSON.parse(JSON.stringify(detailedRecords));
+    return detailedRecords;
 }

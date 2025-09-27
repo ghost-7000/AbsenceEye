@@ -30,8 +30,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import type { ClassWithStudents } from '@/app/actions/teacher-actions';
 import { getTeacherClassesAndStudents, addClass, addStudent, deleteStudent, updateClassName, updateClassNote } from '@/app/actions/teacher-actions';
-import type { Student } from '@/lib/types';
 
+type StudentInClass = ClassWithStudents['students'][number];
 
 export default function ClassManagement() {
   const { toast } = useToast();
@@ -290,7 +290,7 @@ export default function ClassManagement() {
                     </TableHeader>
                     <TableBody>
                         {c.students.length > 0 ? (
-                            c.students.map((student: Student) => (
+                            c.students.map((student: StudentInClass) => (
                                 <TableRow key={student.id}>
                                     <TableCell>
                                     <div className="flex items-center gap-3">

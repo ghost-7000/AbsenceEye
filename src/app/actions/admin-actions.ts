@@ -24,11 +24,11 @@ export async function getMostAbsentStudents(): Promise<AbsentStudent[]> {
     if (absenceCounts.length === 0) return [];
     
     const studentIds = absenceCounts.map(item => item._id);
-    const students = await StudentModel.find({ _id: { $in: studentIds } }).lean();
+    const students: Student[] = await StudentModel.find({ _id: { $in: studentIds } }).lean();
     if (students.length === 0) return [];
 
     const classIds = [...new Set(students.map(student => student.classId))];
-    const classes = await ClassModel.find({ _id: { $in: classIds } }).lean();
+    const classes: Class[] = await ClassModel.find({ _id: { $in: classIds } }).lean();
     
     const studentMap = new Map(students.map(s => [s._id.toString(), s]));
     const classMap = new Map(classes.map(c => [c._id.toString(), c]));
@@ -43,21 +43,28 @@ export async function getMostAbsentStudents(): Promise<AbsentStudent[]> {
         return {
             ...student,
             id: student._id.toString(),
-            _id: student._id,
+            _id: student._id.toString(),
             absences: absenceMap.get(studentId.toString()) || 0,
             className: studentClass?.name || 'غير معروف',
         };
     }).filter((s): s is AbsentStudent => s !== null)
       .sort((a, b) => b.absences - a.absences);
 
-    return JSON.parse(JSON.stringify(mostAbsent));
+    return mostAbsent.map(s => ({
+        ...s,
+        classId: s.classId.toString(),
+    }));
 }
 
 
 export async function getTeachers(): Promise<User[]> {
     await dbConnect();
-    const teachers = await UserModel.find({ role: 'teacher' }).lean();
-    return JSON.parse(JSON.stringify(teachers.map(t => ({...t, id: t._id.toString()}))));
+    const teachers: User[] = await UserModel.find({ role: 'teacher' }).lean();
+    return teachers.map(t => ({
+        ...t, 
+        id: t._id.toString(),
+        _id: t._id.toString()
+    }));
 }
 
 export async function addTeacher(name: string, email: string, password: string, subject: string) {
@@ -98,7 +105,13 @@ export async function getAdminStats() {
     return { totalTeachers, totalClasses, totalStudents };
 }
 
-export interface DetailedAttendanceRecord extends AttendanceRecord {
+export interface DetailedAttendanceRecord {
+    id: string;
+    studentId: string;
+    classId: string;
+    date: string;
+    status: 'present' | 'absent';
+    timestamp: string;
     studentName: string;
     className: string;
     subject?: string;
@@ -113,8 +126,8 @@ export async function getDetailedAttendanceRecords(): Promise<DetailedAttendance
     const studentIds = [...new Set(records.map(r => r.studentId))];
     const classIds = [...new Set(records.map(r => r.classId))];
 
-    const students = await StudentModel.find({ _id: { $in: studentIds } }).lean();
-    const classes = await ClassModel.find({ _id: { $in: classIds } }).lean();
+    const students: Student[] = await StudentModel.find({ _id: { $in: studentIds } }).lean();
+    const classes: Class[] = await ClassModel.find({ _id: { $in: classIds } }).lean();
 
     const studentMap = new Map(students.map(s => [s._id.toString(), s.name]));
     const classMap = new Map(classes.map(c => [c._id.toString(), { name: c.name, subject: c.subject }]));
@@ -125,8 +138,12 @@ export async function getDetailedAttendanceRecords(): Promise<DetailedAttendance
 
         if (studentName && classInfo) {
             return {
-                ...record,
                 id: record._id.toString(),
+                studentId: record.studentId.toString(),
+                classId: record.classId.toString(),
+                date: record.date,
+                status: record.status,
+                timestamp: record.timestamp.toISOString(),
                 studentName: studentName,
                 className: classInfo.name,
                 subject: classInfo.subject,
@@ -135,10 +152,12 @@ export async function getDetailedAttendanceRecords(): Promise<DetailedAttendance
         return null;
     }).filter((r): r is DetailedAttendanceRecord => r !== null);
     
-    return JSON.parse(JSON.stringify(detailedRecords));
+    return detailedRecords;
 }
 
-export interface ClassWithStudentCount extends Class {
+export interface ClassWithStudentCount extends Omit<Class, '_id' | 'teacherId'> {
+    id: string;
+    teacherId: string;
     studentCount: number;
     teacherName: string;
 }
@@ -165,12 +184,15 @@ export async function getClassesWithStudentCounts(): Promise<ClassWithStudentCou
         const teacherName = teacherMap.get(cls.teacherId.toString()) || 'غير معين';
         
         result.push({
-            ...cls,
             id: cls._id.toString(),
+            name: cls.name,
+            teacherId: cls.teacherId.toString(),
+            subject: cls.subject,
+            note: cls.note,
             studentCount,
             teacherName,
         });
     }
 
-    return JSON.parse(JSON.stringify(result));
+    return result;
 }

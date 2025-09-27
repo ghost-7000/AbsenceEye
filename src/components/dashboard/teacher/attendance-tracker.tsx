@@ -28,13 +28,15 @@ import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 
-import type { Student, AttendanceStatus, Class, AttendanceRecord } from '@/lib/types';
+import type { Student, AttendanceStatus } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { getTeacherClassesAndStudents, saveAttendance, getAttendanceForDate } from '@/app/actions/teacher-actions';
 import { Loader2 } from 'lucide-react';
 import type { ClassWithStudents } from '@/app/actions/teacher-actions';
 import { format } from 'date-fns';
+
+type AttendanceRecordForDate = Awaited<ReturnType<typeof getAttendanceForDate>>[number];
 
 export function AttendanceTracker() {
   const [teacherClasses, setTeacherClasses] = React.useState<ClassWithStudents[]>([]);
@@ -46,7 +48,7 @@ export function AttendanceTracker() {
 
   const { toast } = useToast();
 
-  const initializeAttendance = React.useCallback((studentsToInit: Student[], savedAttendance: AttendanceRecord[]) => {
+  const initializeAttendance = React.useCallback((studentsToInit: Student[], savedAttendance: AttendanceRecordForDate[]) => {
       const savedMap = new Map(savedAttendance.map(rec => [rec.studentId, rec.status]));
       const initialAttendance: Record<string, AttendanceStatus> = {};
       studentsToInit.forEach(student => {
