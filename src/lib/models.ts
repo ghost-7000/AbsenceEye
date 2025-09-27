@@ -1,27 +1,36 @@
 import mongoose, { Schema, Document, models, model } from 'mongoose';
-import type { User, Class, Student, AttendanceRecord } from './types';
+import type { User, Teacher, Class, Student, AttendanceRecord } from './types';
 
-// Unified Schema for both Admins and Teachers, stored in 'users' collection
+// Schema for Admins, stored in 'users' collection
 const UserSchema = new Schema<User>({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ['admin', 'teacher'], required: true },
+    role: { type: String, enum: ['admin'], default: 'admin', required: true },
     avatarUrl: { type: String },
-    subject: { type: String }, // Optional field for teachers
+});
+
+// Schema for Teachers, stored in 'teachers' collection
+const TeacherSchema = new Schema<Teacher>({
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    role: { type: String, enum: ['teacher'], default: 'teacher', required: true },
+    subject: { type: String, required: true },
+    avatarUrl: { type: String },
 });
 
 
 const ClassSchema = new Schema<Class>({
     name: { type: String, required: true },
-    teacherId: { type: String, required: true }, // Remains a string reference
+    teacherId: { type: String, required: true }, // Refers to Teacher _id
     subject: { type: String },
     note: { type: String },
 });
 
 const StudentSchema = new Schema<Student>({
     name: { type: String, required: true },
-    classId: { type: String, required: true },
+    classId: { type: String, required: true }, // Refers to Class _id
     avatarUrl: { type: String },
 });
 
@@ -40,7 +49,7 @@ AttendanceRecordSchema.index({ date: 1 });
 
 
 export const UserModel = models.User || model<User>('User', UserSchema);
+export const TeacherModel = models.Teacher || model<Teacher>('Teacher', TeacherSchema);
 export const ClassModel = models.Class || model<Class>('Class', ClassSchema);
 export const StudentModel = models.Student || model<Student>('Student', StudentSchema);
 export const AttendanceRecordModel = models.AttendanceRecord || model<AttendanceRecord>('AttendanceRecord', AttendanceRecordSchema);
-export const TeacherModel = UserModel; // Alias for clarity in other files

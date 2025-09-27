@@ -1,20 +1,26 @@
 import type { Types } from 'mongoose';
 
-// A unified User type for both Admins and Teachers
+// Type for Admins, stored in the 'users' collection
 export type User = {
   _id: Types.ObjectId;
   id: string;
   name: string;
   email: string;
   password?: string;
-  role: 'admin' | 'teacher';
+  role: 'admin';
   avatarUrl: string;
-  subject?: string; // Subject is optional, mainly for teachers
 };
 
-// Teacher is now an alias for User with role 'teacher'
-export type Teacher = User & {
+// Type for Teachers, stored in the 'teachers' collection
+export type Teacher = {
+  _id: Types.ObjectId;
+  id: string;
+  name: string;
+  email: string;
+  password?: string;
   role: 'teacher';
+  avatarUrl: string;
+  subject: string;
 };
 
 export type Class = {

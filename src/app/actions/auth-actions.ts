@@ -1,33 +1,39 @@
 'use server';
 
 import dbConnect from "@/lib/mongodb";
-import { UserModel } from "@/lib/models";
-import type { User } from "@/lib/types";
+import { UserModel, TeacherModel, ClassModel } from "@/lib/models";
+import type { User, Teacher } from "@/lib/types";
 import { revalidatePath } from "next/cache";
+
+type AuthRole = 'admin' | 'teacher';
 
 type AuthInput = {
     email: string;
     password?: string;
-    role: 'admin' | 'teacher';
+    role: AuthRole;
 }
+
+type UnifiedUser = Omit<User & Teacher, '_id'> & { id: string };
 
 type AuthResult = {
     success: boolean;
     message?: string;
-    user?: User;
+    user?: UnifiedUser;
 }
 
 export async function authenticate(credentials: AuthInput): Promise<AuthResult> {
     await dbConnect();
     try {
-        const userDoc = await UserModel.findOne({ email: credentials.email }).lean();
+        let userDoc: User | Teacher | null = null;
         
-        if (!userDoc) {
-            return { success: false, message: 'المستخدم غير موجود.' };
+        if (credentials.role === 'admin') {
+            userDoc = await UserModel.findOne({ email: credentials.email }).lean();
+        } else if (credentials.role === 'teacher') {
+            userDoc = await TeacherModel.findOne({ email: credentials.email }).lean();
         }
 
-        if (userDoc.role !== credentials.role) {
-             return { success: false, message: 'الدور المحدد غير صحيح لهذا المستخدم.' };
+        if (!userDoc) {
+            return { success: false, message: 'المستخدم غير موجود.' };
         }
 
         // In a real app, you would use bcrypt.compare to check the password
@@ -35,10 +41,11 @@ export async function authenticate(credentials: AuthInput): Promise<AuthResult> 
             return { success: false, message: 'كلمة المرور غير صحيحة.' };
         }
         
-        const userObject: User = { ...userDoc, id: userDoc._id.toString() };
+        const userObject = { ...userDoc, id: userDoc._id.toString() };
         delete userObject.password;
+        delete (userObject as any)._id;
 
-        return { success: true, user: JSON.parse(JSON.stringify(userObject)) };
+        return { success: true, user: userObject as UnifiedUser };
 
     } catch (error) {
         console.error('Authentication error:', error);
@@ -46,14 +53,22 @@ export async function authenticate(credentials: AuthInput): Promise<AuthResult> 
     }
 }
 
-export async function getUser(userId: string): Promise<User> {
+export async function getUser(userId: string, role: AuthRole): Promise<UnifiedUser | null> {
     await dbConnect();
-    const user = await UserModel.findById(userId).lean();
+    let userDoc: User | Teacher | null = null;
     
-    if (!user) throw new Error("لم يتم العثور على المستخدم.");
-    const userObject = { ...user, id: user._id.toString() };
+    if (role === 'admin') {
+        userDoc = await UserModel.findById(userId).lean();
+    } else {
+        userDoc = await TeacherModel.findById(userId).lean();
+    }
+    
+    if (!userDoc) return null;
+
+    const userObject = { ...userDoc, id: userDoc._id.toString() };
     delete userObject.password;
-    return JSON.parse(JSON.stringify(userObject));
+    delete (userObject as any)._id;
+    return userObject as UnifiedUser;
 }
 
 type UpdatePayload = {
@@ -62,15 +77,21 @@ type UpdatePayload = {
     avatarDataUrl?: string | null;
 }
 
-export async function updateUser(userId: string, payload: UpdatePayload): Promise<User> {
+export async function updateUser(userId: string, role: AuthRole, payload: UpdatePayload): Promise<UnifiedUser> {
     await dbConnect();
     const { name, email, avatarDataUrl } = payload;
-    const updateData: Partial<User> = { name, email };
+    const updateData: Partial<User | Teacher> = { name, email };
     if (avatarDataUrl) {
         updateData.avatarUrl = avatarDataUrl;
     }
     
-    const updatedUser = await UserModel.findByIdAndUpdate(userId, updateData, { new: true }).lean();
+    let updatedUser: User | Teacher | null = null;
+
+    if (role === 'admin') {
+        updatedUser = await UserModel.findByIdAndUpdate(userId, updateData, { new: true }).lean();
+    } else {
+        updatedUser = await TeacherModel.findByIdAndUpdate(userId, updateData, { new: true }).lean();
+    }
 
     if (!updatedUser) throw new Error("فشل تحديث المستخدم.");
 
@@ -78,12 +99,17 @@ export async function updateUser(userId: string, payload: UpdatePayload): Promis
 
     const userObject = { ...updatedUser, id: updatedUser._id.toString() };
     delete userObject.password;
-    return JSON.parse(JSON.stringify(userObject));
+    delete (userObject as any)._id;
+    return userObject as UnifiedUser;
 }
 
-export async function updatePassword(userId: string, password: string): Promise<{ success: boolean }> {
+export async function updatePassword(userId: string, role: AuthRole, password: string): Promise<{ success: boolean }> {
     await dbConnect();
     // In a real app, hash the password with bcrypt before saving
-    await UserModel.findByIdAndUpdate(userId, { password: password });
+    if (role === 'admin') {
+        await UserModel.findByIdAndUpdate(userId, { password: password });
+    } else {
+         await TeacherModel.findByIdAndUpdate(userId, { password: password });
+    }
     return { success: true };
 }

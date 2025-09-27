@@ -29,6 +29,8 @@ import { getUser, updateUser, updatePassword } from '@/app/actions/auth-actions'
 import type { Teacher, User } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
+type UnifiedUser = User | Teacher;
+
 const profileSchema = z.object({
   name: z.string().min(2, { message: 'الاسم يجب أن يتكون من حرفين على الأقل.' }),
   email: z.string().email({ message: 'الرجاء إدخال بريد إلكتروني صالح.' }),
@@ -48,7 +50,7 @@ export default function TeacherProfilePage() {
   const [isSaving, setIsSaving] = React.useState(false);
   const [isSavingPassword, setIsSavingPassword] = React.useState(false);
 
-  const [user, setUser] = React.useState<User | null>(null);
+  const [user, setUser] = React.useState<UnifiedUser | null>(null);
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -68,13 +70,17 @@ export default function TeacherProfilePage() {
     const fetchUser = async () => {
       setLoading(true);
       const userId = localStorage.getItem('userId');
-      if (userId) {
-        const fetchedUser = await getUser(userId);
-        setUser(fetchedUser);
-        form.reset({
-          name: fetchedUser.name,
-          email: fetchedUser.email,
-        });
+      const userRole = localStorage.getItem('userRole');
+
+      if (userId && (userRole === 'admin' || userRole === 'teacher')) {
+        const fetchedUser = await getUser(userId, userRole);
+        if (fetchedUser) {
+            setUser(fetchedUser);
+            form.reset({
+              name: fetchedUser.name,
+              email: fetchedUser.email,
+            });
+        }
       }
       setLoading(false);
     };
@@ -97,7 +103,7 @@ export default function TeacherProfilePage() {
     setIsSaving(true);
     
     try {
-      const updatedUser = await updateUser(user.id, { 
+      const updatedUser = await updateUser(user.id, user.role, { 
         name: values.name, 
         email: values.email, 
         avatarDataUrl: avatarPreview 
@@ -131,7 +137,7 @@ export default function TeacherProfilePage() {
     if (!user) return;
     setIsSavingPassword(true);
     try {
-      await updatePassword(user.id, values.password);
+      await updatePassword(user.id, user.role, values.password);
       toast({
         title: 'تم تحديث كلمة المرور',
         description: 'تم تغيير كلمة المرور بنجاح.',
@@ -203,7 +209,7 @@ export default function TeacherProfilePage() {
                     <Upload className="mr-2 h-4 w-4" />
                     تغيير الصورة
                   </Button>
-                  <Input 
+                  <Input -
                     ref={fileInputRef}
                     type="file" 
                     className="hidden" 
@@ -256,7 +262,7 @@ export default function TeacherProfilePage() {
       <Card>
           <CardHeader>
               <CardTitle>تغيير كلمة المرور</CardTitle>
-          </Header>
+          </CardHeader>
           <Form {...passwordForm}>
               <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}>
                   <CardContent className="space-y-4">

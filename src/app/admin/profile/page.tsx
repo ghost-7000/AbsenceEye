@@ -26,9 +26,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getUser, updateUser, updatePassword } from '@/app/actions/auth-actions';
-import type { User } from '@/lib/types';
+import type { User, Teacher } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
+type UnifiedUser = User | Teacher;
 
 const profileSchema = z.object({
   name: z.string().min(2, { message: 'الاسم يجب أن يتكون من حرفين على الأقل.' }),
@@ -49,7 +50,7 @@ export default function AdminProfilePage() {
   const [isSaving, setIsSaving] = React.useState(false);
   const [isSavingPassword, setIsSavingPassword] = React.useState(false);
 
-  const [user, setUser] = React.useState<User | null>(null);
+  const [user, setUser] = React.useState<UnifiedUser | null>(null);
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -69,13 +70,17 @@ export default function AdminProfilePage() {
     const fetchUser = async () => {
       setLoading(true);
       const userId = localStorage.getItem('userId');
-      if (userId) {
-        const fetchedUser = await getUser(userId);
-        setUser(fetchedUser as User);
-        form.reset({
-          name: fetchedUser.name,
-          email: fetchedUser.email,
-        });
+      const userRole = localStorage.getItem('userRole');
+
+      if (userId && (userRole === 'admin' || userRole === 'teacher')) {
+        const fetchedUser = await getUser(userId, userRole);
+        if (fetchedUser) {
+            setUser(fetchedUser);
+            form.reset({
+              name: fetchedUser.name,
+              email: fetchedUser.email,
+            });
+        }
       }
       setLoading(false);
     };
@@ -98,13 +103,13 @@ export default function AdminProfilePage() {
     setIsSaving(true);
     
     try {
-      const updatedUser = await updateUser(user.id, { 
+      const updatedUser = await updateUser(user.id, user.role, { 
         name: values.name, 
         email: values.email, 
         avatarDataUrl: avatarPreview 
       });
 
-      setUser(updatedUser as User);
+      setUser(updatedUser);
       localStorage.setItem('userName', updatedUser.name);
       localStorage.setItem('userEmail', updatedUser.email);
       if (updatedUser.avatarUrl) {
@@ -132,7 +137,7 @@ export default function AdminProfilePage() {
     if (!user) return;
     setIsSavingPassword(true);
     try {
-      await updatePassword(user.id, values.password);
+      await updatePassword(user.id, user.role, values.password);
       toast({
         title: 'تم تحديث كلمة المرور',
         description: 'تم تغيير كلمة المرور بنجاح.',
