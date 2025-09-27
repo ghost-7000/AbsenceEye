@@ -107,6 +107,7 @@ export default function TeacherManagement({ initialTeachers }: { initialTeachers
       toast({ title: 'نجاح', description: `تمت إضافة المعلمة ${values.name} بنجاح.` });
       await fetchTeachers(); 
       setDialog({ type: null });
+      addForm.reset();
     } catch (error) {
       toast({ variant: 'destructive', title: 'فشل الإضافة', description: 'حدث خطأ أثناء إضافة المعلمة.'});
     }
@@ -243,26 +244,29 @@ export default function TeacherManagement({ initialTeachers }: { initialTeachers
                     <>
                         <DialogHeader>
                             <DialogTitle>إضافة معلمة جديدة</DialogTitle>
+                            <DialogDescription>
+                                أدخل بيانات المعلمة الجديدة. سيتم إنشاء حساب لها لتسجيل الدخول.
+                            </DialogDescription>
                         </DialogHeader>
                         <Form {...addForm}>
-                            <form onSubmit={addForm.handleSubmit(handleAddSubmit)} className="space-y-4">
+                            <form onSubmit={addForm.handleSubmit(handleAddSubmit)} className="space-y-4 pt-4">
                                 <FormField control={addForm.control} name="name" render={({ field }) => (
-                                    <FormItem><FormLabel>الاسم</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>الاسم الكامل</FormLabel><FormControl><Input placeholder="مثال: نورة عبدالله" {...field} /></FormControl><FormMessage /></FormItem>
                                 )}/>
                                 <FormField control={addForm.control} name="email" render={({ field }) => (
-                                    <FormItem><FormLabel>البريد الإلكتروني</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>البريد الإلكتروني</FormLabel><FormControl><Input type="email" placeholder="example@example.com" {...field} /></FormControl><FormMessage /></FormItem>
                                 )}/>
                                 <FormField control={addForm.control} name="password" render={({ field }) => (
-                                    <FormItem><FormLabel>كلمة المرور</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>كلمة المرور</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
                                 )}/>
                                 <FormField control={addForm.control} name="subject" render={({ field }) => (
-                                    <FormItem><FormLabel>المادة</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>المادة</FormLabel><FormControl><Input placeholder="مثال: لغة عربية" {...field} /></FormControl><FormMessage /></FormItem>
                                 )}/>
                                 <DialogFooter>
                                     <Button type="button" variant="ghost" onClick={closeDialog}>إلغاء</Button>
                                     <Button type="submit" disabled={isProcessing}>
                                         {isProcessing && <Loader2 className="ms-2 h-4 w-4 animate-spin"/>}
-                                        إضافة
+                                        إضافة معلمة
                                     </Button>
                                 </DialogFooter>
                             </form>
@@ -273,11 +277,14 @@ export default function TeacherManagement({ initialTeachers }: { initialTeachers
                     <>
                         <DialogHeader>
                             <DialogTitle>تعديل بيانات المعلمة</DialogTitle>
+                             <DialogDescription>
+                                تعديل بيانات المعلمة: {dialog.teacher?.name}.
+                            </DialogDescription>
                         </DialogHeader>
                         <Form {...editForm}>
-                            <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-4">
+                            <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-4 pt-4">
                                 <FormField control={editForm.control} name="name" render={({ field }) => (
-                                    <FormItem><FormLabel>الاسم</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>الاسم الكامل</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                                 )}/>
                                 <FormField control={editForm.control} name="email" render={({ field }) => (
                                     <FormItem><FormLabel>البريد الإلكتروني</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
