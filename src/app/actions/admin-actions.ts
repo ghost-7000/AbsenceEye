@@ -101,6 +101,7 @@ export async function getAdminStats() {
 export interface DetailedAttendanceRecord extends AttendanceRecord {
     studentName: string;
     className: string;
+    subject?: string;
 }
 
 export async function getDetailedAttendanceRecords(): Promise<DetailedAttendanceRecord[]> {
@@ -116,18 +117,19 @@ export async function getDetailedAttendanceRecords(): Promise<DetailedAttendance
     const classes = await ClassModel.find({ _id: { $in: classIds } }).lean();
 
     const studentMap = new Map(students.map(s => [s._id.toString(), s.name]));
-    const classMap = new Map(classes.map(c => [c._id.toString(), c.name]));
+    const classMap = new Map(classes.map(c => [c._id.toString(), { name: c.name, subject: c.subject }]));
 
     const detailedRecords = records.map(record => {
         const studentName = studentMap.get(record.studentId.toString());
-        const className = classMap.get(record.classId.toString());
+        const classInfo = classMap.get(record.classId.toString());
 
-        if (studentName && className) {
+        if (studentName && classInfo) {
             return {
                 ...record,
                 id: record._id.toString(),
                 studentName: studentName,
-                className: className,
+                className: classInfo.name,
+                subject: classInfo.subject,
             };
         }
         return null;

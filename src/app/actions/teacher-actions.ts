@@ -161,18 +161,19 @@ export async function getDetailedAttendanceForTeacher(teacherId: string): Promis
     const students = await StudentModel.find({ _id: { $in: studentIds } }).lean();
     
     const studentMap = new Map(students.map(s => [s._id.toString(), s.name]));
-    const classMap = new Map(teacherClasses.map(c => [c._id.toString(), c.name]));
+    const classMap = new Map(teacherClasses.map(c => [c._id.toString(), {name: c.name, subject: c.subject}]));
 
     const detailedRecords = records.map(record => {
         const studentName = studentMap.get(record.studentId.toString());
-        const className = classMap.get(record.classId.toString());
+        const classInfo = classMap.get(record.classId.toString());
 
-        if (studentName && className) {
+        if (studentName && classInfo) {
              return {
                 ...record,
                 id: record._id.toString(),
                 studentName: studentName,
-                className: className,
+                className: classInfo.name,
+                subject: classInfo.subject,
             };
         }
         return null;

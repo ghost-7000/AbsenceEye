@@ -85,6 +85,7 @@ export default function AttendanceRecordsTable({ initialRecords }: { initialReco
             <TableRow>
               <TableHead>الطالب</TableHead>
               <TableHead>الصف</TableHead>
+              <TableHead>المادة</TableHead>
               <TableHead>التاريخ</TableHead>
               <TableHead className="text-center">الحالة</TableHead>
             </TableRow>
@@ -95,6 +96,7 @@ export default function AttendanceRecordsTable({ initialRecords }: { initialReco
                 <TableRow key={record.id}>
                     <TableCell className="font-medium">{record.studentName}</TableCell>
                     <TableCell>{record.className}</TableCell>
+                    <TableCell>{record.subject ? <Badge variant="outline">{record.subject}</Badge> : 'غير محدد'}</TableCell>
                     <TableCell>{format(new Date(record.date), 'yyyy/MM/dd')}</TableCell>
                     <TableCell className="text-center">
                     <Badge variant={record.status === 'present' ? 'secondary' : 'destructive'}>
@@ -105,7 +107,7 @@ export default function AttendanceRecordsTable({ initialRecords }: { initialReco
                 ))
             ) : (
                 <TableRow>
-                    <TableCell colSpan={4} className="h-48 text-center">
+                    <TableCell colSpan={5} className="h-48 text-center">
                        <div className="flex flex-col items-center gap-4">
                             <ClipboardList className="h-12 w-12 text-muted-foreground" />
                             <h3 className="font-semibold">لم يتم العثور على سجلات</h3>

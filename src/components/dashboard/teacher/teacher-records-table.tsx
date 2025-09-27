@@ -100,6 +100,8 @@ export default function TeacherRecordsTable() {
     );
   }
 
+  const selectedClassSubject = teacherClasses.find(c => c.id === selectedClassId)?.subject;
+
   return (
     <Card>
       <CardHeader>
@@ -158,6 +160,7 @@ export default function TeacherRecordsTable() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>الطالب</TableHead>
+                        {selectedClassSubject && <TableHead>المادة</TableHead>}
                         <TableHead className="text-center">الحالة</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -165,6 +168,7 @@ export default function TeacherRecordsTable() {
                       {filteredRecords.map(record => (
                         <TableRow key={record.id}>
                           <TableCell className="font-medium">{record.studentName}</TableCell>
+                           {selectedClassSubject && <TableCell><Badge variant="outline">{selectedClassSubject}</Badge></TableCell>}
                           <TableCell className="text-center">
                             <Badge variant={record.status === 'present' ? 'secondary' : 'destructive'}>
                               {record.status === 'present' ? 'حاضر' : 'غائب'}
