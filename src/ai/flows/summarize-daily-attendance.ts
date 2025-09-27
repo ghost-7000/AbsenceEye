@@ -25,9 +25,14 @@ const summarizeDailyAttendancePrompt = ai.definePrompt({
   name: 'summarizeDailyAttendancePrompt',
   input: {schema: SummarizeDailyAttendanceInputSchema},
   output: {schema: SummarizeDailyAttendanceOutputSchema},
-  prompt: `You are a helpful assistant for a school admin.
-  Summarize the daily attendance records for the school on {{date}}.
-  Provide a concise summary of the overall attendance trends and any notable patterns.
+  prompt: `أنت مساعد ذكي لمديرة مدرسة. مهمتك هي تلخيص سجلات الحضور والغياب للمدرسة في تاريخ {{date}}.
+
+قدم ملخصًا واضحًا ومنظمًا باللغة العربية الفصحى. يجب أن يتضمن الملخص النقاط التالية إن وجدت بيانات كافية:
+- النسبة المئوية الإجمالية للحضور في المدرسة.
+- قائمة بالصفوف التي لديها أعلى نسبة غياب، مع ذكر عدد الطلاب الغائبين في كل صف.
+- أي ملاحظات أو أنماط غير اعتيادية تلاحظها في بيانات الحضور لهذا اليوم.
+
+اجعل الملخص على شكل نقاط لتسهيل القراءة.
 `,
 });
 
