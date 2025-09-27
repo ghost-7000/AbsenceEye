@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { StatsCard } from '@/components/dashboard/stats-card';
 import { getAdminStats, getClassesWithStudentCounts } from '@/app/actions/admin-actions';
 import MostAbsentStudents from '@/components/dashboard/admin/most-absent-students';
+import DailySummary from '@/components/dashboard/admin/daily-summary';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
@@ -38,8 +39,9 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Charts and Lists */}
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <MostAbsentStudents />
+        <DailySummary />
       </div>
 
        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
