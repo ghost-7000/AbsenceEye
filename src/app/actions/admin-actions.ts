@@ -146,28 +146,31 @@ export interface ClassWithStudentCount extends Class {
 export async function getClassesWithStudentCounts(): Promise<ClassWithStudentCount[]> {
     await dbConnect();
     
-    const classes = await ClassModel.find().lean();
+    const classes: Class[] = await ClassModel.find().lean();
     if (classes.length === 0) return [];
 
     const validTeacherIds = [...new Set(classes.map(c => c.teacherId))]
-      .filter(id => mongoose.Types.ObjectId.isValid(id));
+      .filter(id => mongoose.Types.ObjectId.isValid(id))
+      .map(id => new mongoose.Types.ObjectId(id));
       
-    const teachers = validTeacherIds.length > 0
+    const teachers: User[] = validTeacherIds.length > 0
         ? await UserModel.find({ _id: { $in: validTeacherIds } }).lean()
         : [];
         
     const teacherMap = new Map(teachers.map(t => [t._id.toString(), t.name]));
 
+    const result: ClassWithStudentCount[] = [];
     for (const cls of classes) {
         const studentCount = await StudentModel.countDocuments({ classId: cls._id.toString() });
         const teacherName = teacherMap.get(cls.teacherId.toString()) || 'غير معين';
         
-        Object.assign(cls, {
+        result.push({
+            ...cls,
             id: cls._id.toString(),
             studentCount,
             teacherName,
         });
     }
 
-    return JSON.parse(JSON.stringify(classes as (Class & { id: string; studentCount: number; teacherName: string })[]));
+    return JSON.parse(JSON.stringify(result));
 }
