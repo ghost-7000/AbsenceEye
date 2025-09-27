@@ -313,5 +313,3 @@ export default function TeacherManagement({ initialTeachers }: { initialTeachers
     </div>
   );
 }
-
-    

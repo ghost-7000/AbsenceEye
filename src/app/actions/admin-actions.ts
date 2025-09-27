@@ -158,19 +158,16 @@ export async function getClassesWithStudentCounts(): Promise<ClassWithStudentCou
         
     const teacherMap = new Map(teachers.map(t => [t._id.toString(), t.name]));
 
-    const result: ClassWithStudentCount[] = [];
-
     for (const cls of classes) {
         const studentCount = await StudentModel.countDocuments({ classId: cls._id.toString() });
-        result.push({
-            ...cls,
+        const teacherName = teacherMap.get(cls.teacherId.toString()) || 'غير معين';
+        
+        Object.assign(cls, {
             id: cls._id.toString(),
             studentCount,
-            teacherName: teacherMap.get(cls.teacherId) || 'غير معين',
+            teacherName,
         });
     }
 
-    return JSON.parse(JSON.stringify(result));
+    return JSON.parse(JSON.stringify(classes as (Class & { id: string; studentCount: number; teacherName: string })[]));
 }
-
-    
