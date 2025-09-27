@@ -64,12 +64,12 @@ export async function seedDatabase() {
     console.log('Creating initial classes...');
     const classA = await ClassModel.create({
         name: 'الصف الأول - أ',
-        teacherId: teacher._id,
+        teacherId: teacher._id.toString(),
         note: 'ملاحظات أولية حول الصف الأول - أ.'
     });
     const classB = await ClassModel.create({
         name: 'الصف الأول - ب',
-        teacherId: teacher._id,
+        teacherId: teacher._id.toString(),
         note: 'ملاحظات أولية حول الصف الأول - ب.'
     });
     console.log('Classes created.');

@@ -4,6 +4,7 @@ import dbConnect from "@/lib/mongodb";
 import { AttendanceRecordModel, StudentModel, ClassModel, UserModel } from "@/lib/models";
 import type { Student, User, AttendanceRecord, Class } from "@/lib/types";
 import { revalidatePath } from "next/cache";
+import mongoose from "mongoose";
 
 interface AbsentStudent extends Student {
   absences: number;
@@ -146,8 +147,25 @@ export async function getClassesWithStudentCounts(): Promise<ClassWithStudentCou
     const classes = await ClassModel.find().lean();
     if (classes.length === 0) return [];
 
-    const teacherIds = [...new Set(classes.map(c => c.teacherId))];
-    const teachers = await UserModel.find({ _id: { $in: teacherIds } }).lean();
+    const validTeacherIds = [...new Set(classes.map(c => c.teacherId))]
+      .filter(id => mongoose.Types.ObjectId.isValid(id));
+      
+    if (validTeacherIds.length === 0) {
+        // Handle case where there are no valid teacher IDs to prevent a crash
+        const result: ClassWithStudentCount[] = [];
+        for (const cls of classes) {
+            const studentCount = await StudentModel.countDocuments({ classId: cls._id.toString() });
+            result.push({
+                ...cls,
+                id: cls._id.toString(),
+                studentCount,
+                teacherName: 'غير معين',
+            });
+        }
+        return JSON.parse(JSON.stringify(result));
+    }
+
+    const teachers = await UserModel.find({ _id: { $in: validTeacherIds } }).lean();
     const teacherMap = new Map(teachers.map(t => [t._id.toString(), t.name]));
 
     const result: ClassWithStudentCount[] = [];
