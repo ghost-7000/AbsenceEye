@@ -17,7 +17,7 @@ export async function seedDatabase() {
       await supabaseAdmin.from('users').insert({
         name: 'المديرة',
         email: 'admin@example.com',
-        password: 'password123',
+        password: '12345678',
         role: 'admin',
         avatar_url: 'https://picsum.photos/seed/admin/200/200',
       });
@@ -31,7 +31,7 @@ export async function seedDatabase() {
       await supabaseAdmin.from('teachers').insert({
         name: 'المعلمة نورة',
         email: 'teacher@example.com',
-        password: 'password123',
+        password: '12345678',
         role: 'teacher',
         subject: 'لغة عربية',
         avatar_url: 'https://picsum.photos/seed/teacher1/200/200',

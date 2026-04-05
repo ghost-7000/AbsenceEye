@@ -4,8 +4,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
-  title: 'AbsenceEye – متابعة الحضور والغياب',
-  description: 'حل أنيق لإدارة الحضور والغياب.',
+  title: 'AbsenceEye – نظام إدارة وحضور الطلاب',
+  description: 'تطبيق AbsenceEye هو الحل الأمثل للمدارس والمعلمين لتسجيل ومتابعة حضور وغياب الطلاب بشكل يومي واحترافي وسهل.',
 };
 
 export default function RootLayout({
