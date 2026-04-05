@@ -1,207 +1,143 @@
 'use server'
 
-import dbConnect from "@/lib/mongodb";
-import { ClassModel, StudentModel, AttendanceRecordModel, TeacherModel } from "@/lib/models";
-import type { Class, Student, Teacher, AttendanceRecord } from "@/lib/types";
-import { revalidatePath } from "next/cache";
-import { format } from "date-fns";
-import type { DetailedAttendanceRecord as AdminDetailedAttendanceRecord } from "./admin-actions";
+import { supabaseAdmin } from '@/lib/supabase';
+import type { Class, Student, Teacher } from '@/lib/types';
+import { revalidatePath } from 'next/cache';
+import { format } from 'date-fns';
+import type { DetailedAttendanceRecord as AdminDetailedAttendanceRecord } from './admin-actions';
 
 export type DetailedAttendanceRecord = AdminDetailedAttendanceRecord;
 
-// This is a helper type for the client component
-export type ClassWithStudents = Omit<Class, '_id'|'teacherId'> & { id: string; teacherId: string; students: (Omit<Student, '_id'|'classId'> & { id: string; classId: string; })[] };
+export type ClassWithStudents = {
+  id: string; name: string; teacherId: string; subject?: string; note?: string;
+  students: { id: string; name: string; classId: string; avatarUrl: string; }[];
+};
 
 export async function getTeacherData(teacherId: string): Promise<Teacher> {
-    await dbConnect();
-    const user = await TeacherModel.findById(teacherId).lean();
-    if (!user) throw new Error('Teacher not found');
-    const { _id, ...userWithoutId } = user;
-    return { ...userWithoutId, id: _id.toString(), role: 'teacher' };
+  const { data } = await supabaseAdmin.from('teachers').select('*').eq('id', teacherId).single();
+  if (!data) throw new Error('Teacher not found');
+  return { id: data.id, name: data.name, email: data.email, role: 'teacher', subject: data.subject, avatarUrl: data.avatar_url || '' };
 }
 
 export async function getTeacherClassesAndStudents(teacherId: string): Promise<ClassWithStudents[]> {
-    await dbConnect();
-    const classes: Class[] = await ClassModel.find({ teacherId }).lean();
-    
-    const classesWithStudents: ClassWithStudents[] = [];
+  const { data: classes } = await supabaseAdmin.from('classes').select('*').eq('teacher_id', teacherId);
+  if (!classes || classes.length === 0) return [];
 
-    for (const cls of classes) {
-        const students: Student[] = await StudentModel.find({ classId: cls._id.toString() }).sort({ name: 1 }).lean();
-        classesWithStudents.push({
-            id: cls._id.toString(),
-            name: cls.name,
-            teacherId: cls.teacherId.toString(),
-            subject: cls.subject,
-            note: cls.note,
-            students: students.map(s => ({
-                id: s._id.toString(),
-                name: s.name,
-                avatarUrl: s.avatarUrl,
-                classId: s.classId.toString(),
-            })),
-        });
-    }
-    
-    return classesWithStudents;
+  const result: ClassWithStudents[] = [];
+  for (const cls of classes) {
+    const { data: students } = await supabaseAdmin
+      .from('students').select('*').eq('class_id', cls.id).order('name');
+    result.push({
+      id: cls.id, name: cls.name, teacherId: cls.teacher_id,
+      subject: cls.subject, note: cls.note,
+      students: (students || []).map(s => ({ id: s.id, name: s.name, avatarUrl: s.avatar_url || '', classId: s.class_id })),
+    });
+  }
+  return result;
 }
 
 export async function addClass(name: string, subject: string, teacherId: string) {
-    await dbConnect();
-    const newClass = new ClassModel({ name, subject, teacherId });
-    await newClass.save();
-    revalidatePath('/teacher/classes');
+  await supabaseAdmin.from('classes').insert({ name, subject, teacher_id: teacherId });
+  revalidatePath('/teacher/classes');
 }
 
 export async function addStudent(name: string, classId: string) {
-    await dbConnect();
-    const newStudent = new StudentModel({ name, classId, avatarUrl: '' });
-    await newStudent.save();
-    revalidatePath('/teacher/classes');
+  await supabaseAdmin.from('students').insert({ name, class_id: classId, avatar_url: '' });
+  revalidatePath('/teacher/classes');
 }
 
 export async function deleteStudent(studentId: string) {
-    await dbConnect();
-    await StudentModel.findByIdAndDelete(studentId);
-    // Also delete any attendance records for this student
-    await AttendanceRecordModel.deleteMany({ studentId });
-    revalidatePath('/teacher/classes');
+  await supabaseAdmin.from('attendance_records').delete().eq('student_id', studentId);
+  await supabaseAdmin.from('students').delete().eq('id', studentId);
+  revalidatePath('/teacher/classes');
 }
 
 export async function updateClassName(classId: string, name: string) {
-    await dbConnect();
-    await ClassModel.findByIdAndUpdate(classId, { name });
-    revalidatePath('/teacher/classes');
+  await supabaseAdmin.from('classes').update({ name }).eq('id', classId);
+  revalidatePath('/teacher/classes');
 }
 
 export async function updateClassNote(classId: string, note: string) {
-    await dbConnect();
-    await ClassModel.findByIdAndUpdate(classId, { note });
-    revalidatePath('/teacher/classes');
+  await supabaseAdmin.from('classes').update({ note }).eq('id', classId);
+  revalidatePath('/teacher/classes');
 }
 
-type AttendanceData = {
-    studentId: string;
-    classId: string;
-    status: 'present' | 'absent';
-}
+type AttendanceData = { studentId: string; classId: string; status: 'present' | 'absent'; };
 
 export async function saveAttendance(records: AttendanceData[]) {
-    await dbConnect();
-    const date = format(new Date(), 'yyyy-MM-dd');
-    const timestamp = new Date();
-
-    const operations = records.map(record => ({
-        updateOne: {
-            filter: { studentId: record.studentId, classId: record.classId, date: date },
-            update: { $set: { status: record.status, studentId: record.studentId, classId: record.classId, date, timestamp } },
-            upsert: true,
-        }
-    }));
-
-    if (operations.length > 0) {
-        await AttendanceRecordModel.bulkWrite(operations);
-    }
-    revalidatePath('/teacher/attendance');
-    revalidatePath('/teacher/dashboard');
-    revalidatePath('/teacher/records');
-    revalidatePath('/admin/attendance-records');
-    revalidatePath('/admin/dashboard');
-
+  const date = format(new Date(), 'yyyy-MM-dd');
+  const timestamp = new Date().toISOString();
+  const upsertData = records.map(r => ({
+    student_id: r.studentId, class_id: r.classId, date, status: r.status, timestamp,
+  }));
+  await supabaseAdmin.from('attendance_records').upsert(upsertData, { onConflict: 'student_id,class_id,date' });
+  revalidatePath('/teacher/attendance');
+  revalidatePath('/teacher/dashboard');
+  revalidatePath('/teacher/records');
+  revalidatePath('/admin/attendance-records');
+  revalidatePath('/admin/dashboard');
 }
 
-export async function getAttendanceForDate(teacherId: string, date: string): Promise<Omit<AttendanceRecord, '_id'|'studentId'|'classId'|'timestamp'> & {id: string, studentId:string, classId:string, timestamp: string}[]> {
-    await dbConnect();
-    const teacherClasses = await ClassModel.find({ teacherId }).select('_id');
-    const classIds = teacherClasses.map(c => c._id.toString());
-    
-    const attendance: AttendanceRecord[] = await AttendanceRecordModel.find({ 
-        classId: { $in: classIds },
-        date: date 
-    }).lean();
+export async function getAttendanceForDate(teacherId: string, date: string) {
+  const { data: teacherClasses } = await supabaseAdmin.from('classes').select('id').eq('teacher_id', teacherId);
+  const classIds = (teacherClasses || []).map(c => c.id);
+  if (classIds.length === 0) return [];
 
-    return attendance.map(rec => ({
-        id: rec._id.toString(),
-        studentId: rec.studentId.toString(),
-        classId: rec.classId.toString(),
-        date: rec.date,
-        status: rec.status,
-        timestamp: rec.timestamp ? rec.timestamp.toISOString() : new Date(rec.date).toISOString(),
-    }));
+  const { data } = await supabaseAdmin
+    .from('attendance_records').select('*').in('class_id', classIds).eq('date', date);
+  return (data || []).map(r => ({
+    id: r.id, studentId: r.student_id, classId: r.class_id, date: r.date,
+    status: r.status as 'present' | 'absent',
+    timestamp: r.timestamp || new Date(r.date).toISOString(),
+  }));
 }
-
 
 export async function getTeacherStats(teacherId: string) {
-    await dbConnect();
-    
-    const classCount = await ClassModel.countDocuments({ teacherId: teacherId });
-    
-    const teacherClasses = await ClassModel.find({ teacherId: teacherId }).select('_id');
-    const classIds = teacherClasses.map(c => c._id);
+  const { data: teacherClasses } = await supabaseAdmin.from('classes').select('id').eq('teacher_id', teacherId);
+  const classIds = (teacherClasses || []).map(c => c.id);
+  const classCount = classIds.length;
 
-    const studentCount = await StudentModel.countDocuments({ classId: { $in: classIds } });
-    
-    let attendancePercentage = 0;
-    if (studentCount > 0) {
-        const today = format(new Date(), 'yyyy-MM-dd');
-        
-        const presentCount = await AttendanceRecordModel.countDocuments({
-            classId: { $in: classIds },
-            date: today,
-            status: 'present'
-        });
-        // Avoid division by zero if there are students but no attendance taken yet
-        const totalTaken = await AttendanceRecordModel.countDocuments({
-             classId: { $in: classIds },
-             date: today,
-        });
+  if (classIds.length === 0) return { classCount: 0, studentCount: 0, attendancePercentage: 0 };
 
-        if (totalTaken > 0) {
-            attendancePercentage = Math.round((presentCount / totalTaken) * 100);
-        }
-    }
+  const { count: studentCount } = await supabaseAdmin
+    .from('students').select('*', { count: 'exact', head: true }).in('class_id', classIds);
 
-    return { classCount, studentCount, attendancePercentage };
+  let attendancePercentage = 0;
+  if (studentCount && studentCount > 0) {
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const [{ count: presentCount }, { count: totalTaken }] = await Promise.all([
+      supabaseAdmin.from('attendance_records').select('*', { count: 'exact', head: true }).in('class_id', classIds).eq('date', today).eq('status', 'present'),
+      supabaseAdmin.from('attendance_records').select('*', { count: 'exact', head: true }).in('class_id', classIds).eq('date', today),
+    ]);
+    if (totalTaken && totalTaken > 0) attendancePercentage = Math.round(((presentCount || 0) / totalTaken) * 100);
+  }
+  return { classCount, studentCount: studentCount || 0, attendancePercentage };
 }
 
 export async function getDetailedAttendanceForTeacher(teacherId: string): Promise<DetailedAttendanceRecord[]> {
-    await dbConnect();
+  const { data: teacherClasses } = await supabaseAdmin.from('classes').select('*').eq('teacher_id', teacherId);
+  if (!teacherClasses || teacherClasses.length === 0) return [];
 
-    const teacherClasses: Class[] = await ClassModel.find({ teacherId }).lean();
-    if (teacherClasses.length === 0) return [];
+  const classIds = teacherClasses.map(c => c.id);
+  const { data: records } = await supabaseAdmin
+    .from('attendance_records').select('*').in('class_id', classIds)
+    .order('date', { ascending: false }).order('timestamp', { ascending: false });
+  if (!records || records.length === 0) return [];
 
-    const classIds = teacherClasses.map(c => c._id.toString());
+  const studentIds = [...new Set(records.map(r => r.student_id))];
+  const { data: students } = await supabaseAdmin.from('students').select('id, name').in('id', studentIds);
+  const studentMap = new Map((students || []).map(s => [s.id, s.name]));
+  const classMap = new Map(teacherClasses.map(c => [c.id, { name: c.name, subject: c.subject }]));
 
-    const records: AttendanceRecord[] = await AttendanceRecordModel.find({ classId: { $in: classIds } }).sort({ date: -1, timestamp: -1 }).lean();
-    if (records.length === 0) return [];
-    
-    const studentIds = records.map(r => r.studentId);
-    
-    const students: Student[] = await StudentModel.find({ _id: { $in: studentIds } }).lean();
-    
-    const studentMap = new Map(students.map(s => [s._id.toString(), s.name]));
-    const classMap = new Map(teacherClasses.map(c => [c._id.toString(), {name: c.name, subject: c.subject}]));
-
-    const detailedRecords = records.map(record => {
-        const studentName = studentMap.get(record.studentId.toString());
-        const classInfo = classMap.get(record.classId.toString());
-
-        if (studentName && classInfo) {
-             return {
-                id: record._id.toString(),
-                studentId: record.studentId.toString(),
-                classId: record.classId.toString(),
-                date: record.date,
-                status: record.status,
-                timestamp: record.timestamp ? record.timestamp.toISOString() : new Date(record.date).toISOString(),
-                studentName: studentName,
-                className: classInfo.name,
-                subject: classInfo.subject,
-            };
-        }
-        return null;
-    }).filter((r): r is DetailedAttendanceRecord => r !== null);
-
-
-    return detailedRecords;
+  return records.map(r => {
+    const studentName = studentMap.get(r.student_id);
+    const classInfo = classMap.get(r.class_id);
+    if (!studentName || !classInfo) return null;
+    return {
+      id: r.id, studentId: r.student_id, classId: r.class_id, date: r.date,
+      status: r.status as 'present' | 'absent',
+      timestamp: r.timestamp || new Date(r.date).toISOString(),
+      studentName, className: classInfo.name, subject: classInfo.subject,
+    };
+  }).filter((r): r is DetailedAttendanceRecord => r !== null);
 }

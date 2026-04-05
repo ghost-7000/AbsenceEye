@@ -1,8 +1,4 @@
-import type { Types } from 'mongoose';
-
-// Type for Admins, stored in the 'users' collection
 export type User = {
-  _id: Types.ObjectId;
   id: string;
   name: string;
   email: string;
@@ -11,9 +7,7 @@ export type User = {
   avatarUrl: string;
 };
 
-// Type for Teachers, stored in the 'teachers' collection
 export type Teacher = {
-  _id: Types.ObjectId;
   id: string;
   name: string;
   email: string;
@@ -24,7 +18,6 @@ export type Teacher = {
 };
 
 export type Class = {
-  _id: Types.ObjectId;
   id: string;
   name: string;
   teacherId: string;
@@ -33,7 +26,6 @@ export type Class = {
 };
 
 export type Student = {
-  _id: Types.ObjectId;
   id: string;
   name: string;
   classId: string;
@@ -43,11 +35,10 @@ export type Student = {
 export type AttendanceStatus = 'present' | 'absent';
 
 export type AttendanceRecord = {
-  _id: Types.ObjectId;
   id: string;
   studentId: string;
   classId: string;
-  date: string; // YYYY-MM-DD
+  date: string;
   status: AttendanceStatus;
-  timestamp: Date;
+  timestamp: Date | string;
 };
