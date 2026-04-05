@@ -6,11 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Sparkles } from 'lucide-react';
 import { summarizeDailyAttendance } from '@/ai/flows/summarize-daily-attendance';
 import { format } from 'date-fns';
+import { useTranslation } from '@/components/language-provider';
 
 export default function DailySummary() {
     const [summary, setSummary] = React.useState('');
     const [loading, setLoading] = React.useState(false);
     const [error, setError] = React.useState('');
+    const t = useTranslation();
 
     const handleGenerateSummary = async () => {
         setLoading(true);
@@ -22,7 +24,7 @@ export default function DailySummary() {
             setSummary(result.summary);
         } catch (e) {
             console.error(e);
-            setError('حدث خطأ أثناء إنشاء الملخص. الرجاء المحاولة مرة أخرى.');
+            setError(t.errorGen);
         } finally {
             setLoading(false);
         }
@@ -31,26 +33,26 @@ export default function DailySummary() {
     return (
         <Card className="flex h-full flex-col">
             <CardHeader>
-                <CardTitle>ملخص الحضور اليومي (AI)</CardTitle>
+                <CardTitle>{t.dailySummary}</CardTitle>
                 <CardDescription>
-                    احصل على ملخص ذكي لحالة الحضور والغياب لجميع الصفوف اليوم.
+                    {t.getSummaryDetails}
                 </CardDescription>
             </CardHeader>
             <CardContent className="flex-grow flex flex-col items-center justify-center">
                 {loading ? (
                     <div className="flex flex-col items-center gap-2 text-center">
                          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                         <p className="text-sm text-muted-foreground">جاري تحليل البيانات وإنشاء الملخص...</p>
+                         <p className="text-sm text-muted-foreground">{t.generating}</p>
                     </div>
                 ) : summary ? (
-                    <div className="text-sm text-right bg-secondary/50 p-4 rounded-md w-full h-full overflow-y-auto">
+                    <div className="text-sm text-right bg-secondary/50 p-4 rounded-md w-full h-full overflow-y-auto" dir="auto">
                         <p className="whitespace-pre-wrap">{summary}</p>
                     </div>
                 ) : (
                      <div className="text-center">
                         <Button onClick={handleGenerateSummary}>
-                            <Sparkles className="ms-2 h-4 w-4" />
-                            إنشاء ملخص لليوم
+                            <Sparkles className="mx-2 h-4 w-4" />
+                            {t.generateForToday}
                         </Button>
                          {error && <p className="text-sm text-destructive mt-4">{error}</p>}
                     </div>
@@ -59,8 +61,8 @@ export default function DailySummary() {
             {summary && (
                  <div className="border-t p-4">
                     <Button variant="ghost" size="sm" className="w-full" onClick={handleGenerateSummary}>
-                       <Sparkles className="ms-2 h-4 w-4" />
-                        إعادة إنشاء الملخص
+                       <Sparkles className="mx-2 h-4 w-4" />
+                        {t.regenerate}
                     </Button>
                  </div>
             )}

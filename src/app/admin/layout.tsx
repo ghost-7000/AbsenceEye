@@ -1,3 +1,5 @@
+'use client';
+
 import {
   SidebarProvider,
   Sidebar,
@@ -11,17 +13,20 @@ import {
 import { MainHeader } from '@/components/shared/main-header';
 import Link from 'next/link';
 import { GraduationCap, LayoutDashboard, Users, School, Settings, ClipboardList } from 'lucide-react';
+import { useTranslation } from '@/components/language-provider';
 
 export default function AdminDashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const t = useTranslation();
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen flex-col">
         <div className="flex flex-1">
-          <Sidebar side="right">
+          <Sidebar side="right" className="rtl:border-l ltr:border-r">
             <SidebarHeader className="border-b p-4 flex items-center justify-center">
                 <Link href="/admin/dashboard">
                     <GraduationCap className="h-8 w-8 text-primary group-data-[collapsible=icon]:group-data-[state=collapsed]:h-6 group-data-[collapsible=icon]:group-data-[state=collapsed]:w-6 transition-all" />
@@ -30,34 +35,34 @@ export default function AdminDashboardLayout({
             <SidebarContent>
               <SidebarMenu className="p-2">
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="لوحة التحكم" href="/admin/dashboard">
+                  <SidebarMenuButton asChild tooltip={t.dashboard}>
                     <Link href="/admin/dashboard">
                       <LayoutDashboard />
-                      <span>لوحة التحكم</span>
+                      <span>{t.dashboard}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="إدارة المعلمات" href="/admin/teachers">
+                  <SidebarMenuButton asChild tooltip={t.teachers}>
                     <Link href="/admin/teachers">
                       <Users />
-                      <span>المعلمات</span>
+                      <span>{t.teachers}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="إدارة الصفوف" href="/admin/classes">
+                  <SidebarMenuButton asChild tooltip={t.classes}>
                     <Link href="/admin/classes">
                       <School />
-                      <span>الصفوف</span>
+                      <span>{t.classes}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                  <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="سجلات الحضور" href="/admin/attendance-records">
+                  <SidebarMenuButton asChild tooltip={t.attendanceRecords}>
                     <Link href="/admin/attendance-records">
                       <ClipboardList />
-                      <span>سجلات الحضور</span>
+                      <span>{t.attendanceRecords}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -66,10 +71,10 @@ export default function AdminDashboardLayout({
             <SidebarFooter className="border-t p-2">
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="الإعدادات" href="/admin/settings">
+                  <SidebarMenuButton asChild tooltip={t.settings} href="/admin/settings">
                     <Link href="/admin/settings">
                       <Settings />
-                      <span>الإعدادات</span>
+                      <span>{t.settings}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
