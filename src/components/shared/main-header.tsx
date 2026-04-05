@@ -5,11 +5,12 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { ThemeToggle } from './theme-toggle';
 import { UserNav } from './user-nav';
 import Link from 'next/link';
-import { GraduationCap, Globe } from 'lucide-react';
+import { GraduationCap } from 'lucide-react';
+import { useLanguage } from '@/components/language-provider';
 
 export function MainHeader() {
     const [dashboardUrl, setDashboardUrl] = React.useState('/');
-    const [lang, setLang] = React.useState('ar');
+    const { lang, setLang } = useLanguage();
 
     React.useEffect(() => {
         const userRole = localStorage.getItem('userRole');
@@ -31,14 +32,24 @@ export function MainHeader() {
             </div>
 
             <div className="flex items-center gap-2 sm:gap-4">
-                <button
-                    onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
-                    className="group relative flex h-9 w-9 items-center justify-center rounded-md border bg-background/50 hover:bg-accent hover:text-accent-foreground transition-all duration-300"
-                    title={lang === 'ar' ? 'Switch to English' : 'التبديل للعربية'}
-                >
-                    <Globe className="h-[1.2rem] w-[1.2rem] transition-transform group-hover:rotate-12 group-hover:scale-110" />
-                    <span className="sr-only">Toggle language</span>
-                </button>
+                <div className="flex items-center rounded-full border bg-muted/50 p-1 shadow-inner">
+                    <button
+                        onClick={() => setLang('ar')}
+                        className={`rounded-full px-3 py-1 text-xs font-bold transition-all ${
+                            lang === 'ar' ? 'bg-background shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                    >
+                        عربي
+                    </button>
+                    <button
+                        onClick={() => setLang('en')}
+                        className={`rounded-full px-3 py-1 text-xs font-bold transition-all ${
+                            lang === 'en' ? 'bg-background shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                    >
+                        EN
+                    </button>
+                </div>
                 <ThemeToggle />
                 <UserNav />
                 <SidebarTrigger className="hidden md:flex" />
