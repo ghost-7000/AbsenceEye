@@ -1,7 +1,12 @@
+'use client';
+
 import { LoginForm } from '@/components/auth/login-form';
 import { GraduationCap } from 'lucide-react';
+import { useTranslation } from '@/components/language-provider';
 
 export default function LoginPage() {
+  const t = useTranslation();
+
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
@@ -12,7 +17,7 @@ export default function LoginPage() {
           <h1 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
             AbsenceEye
           </h1>
-          <p className="mt-2 text-muted-foreground">أهلاً بك! الرجاء تسجيل الدخول للمتابعة.</p>
+          <p className="mt-2 text-muted-foreground">{t.loginSubtext}</p>
         </div>
         <LoginForm />
       </div>

@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '../ui/skeleton';
+import { useTranslation, useLanguage } from '@/components/language-provider';
 
 export function UserNav() {
   const router = useRouter();
@@ -24,6 +25,8 @@ export function UserNav() {
   const [userRole, setUserRole] = useState('');
   const [userAvatar, setUserAvatar] = useState('');
   const [isClient, setIsClient] = useState(false);
+  const t = useTranslation();
+  const { lang } = useLanguage();
 
 
   const updateUserData = () => {
@@ -69,8 +72,10 @@ export function UserNav() {
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1 text-right">
-            <p className="text-sm font-medium leading-none">{userName}</p>
+          <div className="flex flex-col space-y-1 text-right" dir="auto">
+            <p className="text-sm font-medium leading-none">
+                {lang === 'en' && localStorage.getItem('userNameEn') ? localStorage.getItem('userNameEn') : userName}
+            </p>
             <p className="text-xs leading-none text-muted-foreground">{userEmail}</p>
           </div>
         </DropdownMenuLabel>
@@ -78,21 +83,21 @@ export function UserNav() {
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
             <Link href={profileUrl}>
-              <UserIcon className="ms-2 h-4 w-4" />
-              <span>الملف الشخصي</span>
+              <UserIcon className="mx-2 h-4 w-4" />
+              <span>{t.profile || 'الملف الشخصي'}</span>
             </Link>
           </DropdownMenuItem>
            <DropdownMenuItem asChild>
             <Link href={settingsUrl}>
-              <Settings className="ms-2 h-4 w-4" />
-              <span>الإعدادات</span>
+              <Settings className="mx-2 h-4 w-4" />
+              <span>{t.settings}</span>
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>
-          <LogOut className="ms-2 h-4 w-4" />
-          <span>تسجيل الخروج</span>
+          <LogOut className="mx-2 h-4 w-4" />
+          <span>{t.logout || 'تسجيل الخروج'}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

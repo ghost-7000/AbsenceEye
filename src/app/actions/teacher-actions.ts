@@ -9,8 +9,8 @@ import type { DetailedAttendanceRecord as AdminDetailedAttendanceRecord } from '
 export type DetailedAttendanceRecord = AdminDetailedAttendanceRecord;
 
 export type ClassWithStudents = {
-  id: string; name: string; teacherId: string; subject?: string; note?: string;
-  students: { id: string; name: string; classId: string; avatarUrl: string; }[];
+  id: string; name: string; name_en?: string; teacherId: string; subject?: string; note?: string;
+  students: { id: string; name: string; name_en?: string; classId: string; avatarUrl: string; }[];
 };
 
 export async function getTeacherData(teacherId: string): Promise<Teacher> {
@@ -28,9 +28,9 @@ export async function getTeacherClassesAndStudents(teacherId: string): Promise<C
     const { data: students } = await supabaseAdmin
       .from('students').select('*').eq('class_id', cls.id).order('name');
     result.push({
-      id: cls.id, name: cls.name, teacherId: cls.teacher_id,
+      id: cls.id, name: cls.name, name_en: cls.name_en, teacherId: cls.teacher_id,
       subject: cls.subject, note: cls.note,
-      students: (students || []).map(s => ({ id: s.id, name: s.name, avatarUrl: s.avatar_url || '', classId: s.class_id })),
+      students: (students || []).map(s => ({ id: s.id, name: s.name, name_en: s.name_en, avatarUrl: s.avatar_url || '', classId: s.class_id })),
     });
   }
   return result;

@@ -1,6 +1,7 @@
 export type User = {
   id: string;
   name: string;
+  name_en?: string;
   email: string;
   password?: string;
   role: 'admin';
@@ -10,6 +11,7 @@ export type User = {
 export type Teacher = {
   id: string;
   name: string;
+  name_en?: string;
   email: string;
   password?: string;
   role: 'teacher';
@@ -20,6 +22,7 @@ export type Teacher = {
 export type Class = {
   id: string;
   name: string;
+  name_en?: string;
   teacherId: string;
   subject?: string;
   note?: string;
@@ -28,6 +31,7 @@ export type Class = {
 export type Student = {
   id: string;
   name: string;
+  name_en?: string;
   classId: string;
   avatarUrl: string;
 };

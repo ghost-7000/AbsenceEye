@@ -38,6 +38,8 @@ import { format } from 'date-fns';
 
 type AttendanceRecordForDate = Awaited<ReturnType<typeof getAttendanceForDate>>[number];
 
+import { useLanguage, useTranslation } from '@/components/language-provider';
+
 export function AttendanceTracker() {
   const [teacherClasses, setTeacherClasses] = React.useState<ClassWithStudents[]>([]);
   const [students, setStudents] = React.useState<Student[]>([]);
@@ -47,6 +49,8 @@ export function AttendanceTracker() {
   const [isSaving, setIsSaving] = React.useState(false);
 
   const { toast } = useToast();
+  const { lang } = useLanguage();
+  const t = useTranslation();
 
   const initializeAttendance = React.useCallback((studentsToInit: Student[], savedAttendance: AttendanceRecordForDate[]) => {
       const savedMap = new Map(savedAttendance.map(rec => [rec.studentId, rec.status]));
@@ -63,7 +67,7 @@ export function AttendanceTracker() {
         try {
             const userId = localStorage.getItem('userId');
             if (!userId) {
-                toast({ variant: 'destructive', title: 'خطأ', description: 'لم يتم العثور على المعلم.' });
+                toast({ variant: 'destructive', title: t.errorGen, description: 'User not found' });
                 setLoading(false);
                 return;
             }
@@ -82,13 +86,13 @@ export function AttendanceTracker() {
                 initializeAttendance(classStudents, savedAttendance);
             }
         } catch (error) {
-            toast({ variant: 'destructive', title: 'خطأ', description: 'فشل تحميل بيانات الصفوف.' });
+            toast({ variant: 'destructive', title: t.errorGen, description: t.errorGen });
         } finally {
             setLoading(false);
         }
     }
     fetchData();
-  }, [toast, initializeAttendance]);
+  }, [toast, initializeAttendance, t]);
 
   const handleClassChange = (classId: string) => {
     setSelectedClassId(classId);
@@ -127,16 +131,18 @@ export function AttendanceTracker() {
       }));
       
       await saveAttendance(recordsToSave);
+      const selectedClass = teacherClasses.find(c=> c.id === selectedClassId);
+      const className = lang === 'en' && selectedClass?.name_en ? selectedClass.name_en : selectedClass?.name;
 
       toast({
-          title: "تم حفظ الحضور",
-          description: `تم تسجيل الحضور والغياب لصف ${teacherClasses.find(c=> c.id === selectedClassId)?.name}.`,
+          title: t.save + " " + t.status,
+          description: `${t.takeAttendance} ${className}.`,
       });
     } catch(e) {
       toast({
           variant: 'destructive',
-          title: "فشل حفظ الحضور",
-          description: "حدث خطأ أثناء حفظ البيانات.",
+          title: t.errorGen,
+          description: t.errorGen,
       });
     } finally {
       setIsSaving(false);
@@ -146,20 +152,20 @@ export function AttendanceTracker() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>تسجيل الحضور والغياب</CardTitle>
+        <CardTitle>{t.takeAttendance || 'تسجيل الحضور والغياب'}</CardTitle>
         <CardDescription>
-          اختر صفًا وقم بتسجيل حضور الطلاب لليوم.
+          {lang === 'en' ? 'Select a class and record attendance for today.' : 'اختر صفًا وقم بتسجيل حضور الطلاب لليوم.'}
         </CardDescription>
         <div className="pt-4">
-          <Label htmlFor="class-select">اختر الصف</Label>
+          <Label htmlFor="class-select">{t.classes}</Label>
           <Select value={selectedClassId} onValueChange={handleClassChange} disabled={loading}>
             <SelectTrigger id="class-select" className="w-full md:w-[300px]">
-              <SelectValue placeholder="اختر صفًا" />
+              <SelectValue placeholder={t.search} />
             </SelectTrigger>
             <SelectContent>
               {teacherClasses.map(c => (
                 <SelectItem key={c.id} value={c.id}>
-                  {c.name}
+                  {lang === 'en' && c.name_en ? c.name_en : c.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -176,40 +182,42 @@ export function AttendanceTracker() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>الطالب</TableHead>
-              <TableHead className="text-center">الحالة (حاضر/غائب)</TableHead>
+              <TableHead>{t.name}</TableHead>
+              <TableHead className="text-center">{t.status}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {students.length > 0 ? (
-              students.map(student => (
+              students.map(student => {
+                  const studentName = lang === 'en' && student.name_en ? student.name_en : student.name;
+                  return (
                 <TableRow key={student.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
-                        <AvatarImage src={student.avatarUrl || undefined} alt={student.name} />
-                        <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={student.avatarUrl || undefined} alt={studentName} />
+                        <AvatarFallback>{studentName.charAt(0)}</AvatarFallback>
                       </Avatar>
-                      <div className="font-medium">{student.name}</div>
+                      <div className="font-medium">{studentName}</div>
                     </div>
                   </TableCell>
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center gap-4">
-                        <span className={`text-sm font-medium ${attendance[student.id] === 'absent' ? 'text-red-500' : 'text-muted-foreground'}`}>غائب</span>
+                        <span className={`text-sm font-medium ${attendance[student.id] === 'absent' ? 'text-red-500' : 'text-muted-foreground'}`}>{t.absent}</span>
                         <Switch
                             checked={attendance[student.id] === 'present'}
                             onCheckedChange={(checked) => handleAttendanceChange(student.id, checked)}
-                            aria-label={`حالة حضور ${student.name}`}
+                            aria-label={`Attendance ${studentName}`}
                         />
-                         <span className={`text-sm font-medium ${attendance[student.id] === 'present' ? 'text-green-600' : 'text-muted-foreground'}`}>حاضر</span>
+                         <span className={`text-sm font-medium ${attendance[student.id] === 'present' ? 'text-green-600' : 'text-muted-foreground'}`}>{t.present}</span>
                     </div>
                   </TableCell>
                 </TableRow>
-              ))
+              )})
             ) : (
               <TableRow>
                 <TableCell colSpan={2} className="h-24 text-center">
-                  {teacherClasses.length > 0 ? 'لا يوجد طلاب في هذا الصف.' : 'لا توجد صفوف. الرجاء إنشاء صف جديد أولاً.'}
+                  {teacherClasses.length > 0 ? t.noData : (lang === 'en' ? 'No classes found.' : 'لا توجد صفوف.')}
                 </TableCell>
               </TableRow>
             )}
@@ -220,8 +228,8 @@ export function AttendanceTracker() {
       </CardContent>
       <CardFooter>
           <Button onClick={handleSaveAttendance} disabled={students.length === 0 || isSaving || loading}>
-            {isSaving && <Loader2 className="ms-2 h-4 w-4 animate-spin" />}
-            حفظ الحضور
+            {isSaving && <Loader2 className="mx-2 h-4 w-4 animate-spin" />}
+            {t.save}
           </Button>
       </CardFooter>
     </Card>

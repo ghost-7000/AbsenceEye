@@ -29,11 +29,13 @@ import { useToast } from '@/hooks/use-toast';
 import { authenticate } from '@/app/actions/auth-actions';
 import { Label } from '@/components/ui/label';
 
-const formSchema = z.object({
-  email: z.string().email({ message: 'الرجاء إدخال بريد إلكتروني صالح.' }),
-  password: z.string().min(6, { message: 'كلمة المرور يجب أن لا تقل عن 6 أحرف.' }),
+import { useTranslation } from '@/components/language-provider';
+
+const createFormSchema = (t: any) => z.object({
+  email: z.string().email({ message: t.email ? t.email + ' invalid' : 'بريد غير صالح' }),
+  password: z.string().min(6, { message: t.password ? 'Minimum 6 chars' : 'كلمة المرور قصيرة' }),
   role: z.enum(['admin', 'teacher'], {
-    required_error: 'الرجاء اختيار الدور.',
+    required_error: t.dashboard ? 'role required' : 'الرجاء اختيار الدور.',
   }),
 });
 
@@ -41,9 +43,10 @@ export function LoginForm() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
+  const t = useTranslation();
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<ReturnType<typeof createFormSchema>>>({
+    resolver: zodResolver(createFormSchema(t)),
     defaultValues: {
       email: '',
       password: '',
@@ -51,7 +54,7 @@ export function LoginForm() {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<ReturnType<typeof createFormSchema>>) {
     setIsLoading(true);
     
     try {
@@ -60,13 +63,14 @@ export function LoginForm() {
         if (result.success && result.user) {
             const { user } = result;
             toast({
-                title: 'تم تسجيل الدخول بنجاح',
-                description: `مرحباً بك ${user.name}.`,
+                title: t.loginSuccess,
+                description: `${t.welcomeBack} ${user.name_en && localStorage.getItem('appLang') === 'en' ? user.name_en : user.name}`,
             });
             
             localStorage.setItem('userId', user.id);
             localStorage.setItem('userRole', user.role);
             localStorage.setItem('userName', user.name);
+            localStorage.setItem('userNameEn', user.name_en || '');
             localStorage.setItem('userEmail', user.email);
             localStorage.setItem('userAvatar', user.avatarUrl || '');
 
@@ -74,16 +78,16 @@ export function LoginForm() {
         } else {
             toast({
                 variant: 'destructive',
-                title: 'خطأ في تسجيل الدخول',
-                description: result.message || 'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
+                title: t.loginError,
+                description: result.message || t.loginError,
             });
             setIsLoading(false);
         }
     } catch (error) {
         toast({
             variant: 'destructive',
-            title: 'خطأ غير متوقع',
-            description: 'حدث خطأ أثناء محاولة تسجيل الدخول. الرجاء المحاولة مرة أخرى.',
+            title: t.errorGen,
+            description: t.errorGen,
         });
         setIsLoading(false);
     }
@@ -99,16 +103,16 @@ export function LoginForm() {
               name="role"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>الدور</FormLabel>
+                  <FormLabel>{t.role || 'Role / الدور'}</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="اختر دورك" />
+                        <SelectValue placeholder={t.search || "Select role"} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="teacher">معلمة</SelectItem>
-                      <SelectItem value="admin">مديرة</SelectItem>
+                      <SelectItem value="teacher">{t.teachers || 'Teacher'}</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -120,7 +124,7 @@ export function LoginForm() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>البريد الإلكتروني</FormLabel>
+                  <FormLabel>{t.email}</FormLabel>
                   <FormControl>
                     <Input placeholder="name@example.com" {...field} />
                   </FormControl>
@@ -133,7 +137,7 @@ export function LoginForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>كلمة المرور</FormLabel>
+                  <FormLabel>{t.password}</FormLabel>
                   <FormControl>
                     <Input type="password" placeholder="••••••••" {...field} />
                   </FormControl>
@@ -144,8 +148,8 @@ export function LoginForm() {
           </CardContent>
           <CardFooter>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading && <Loader2 className="ms-2 h-4 w-4 animate-spin" />}
-              تسجيل الدخول
+              {isLoading && <Loader2 className="mx-2 h-4 w-4 animate-spin" />}
+              {isLoading ? t.signingIn : t.loginBtn}
             </Button>
           </CardFooter>
         </form>
