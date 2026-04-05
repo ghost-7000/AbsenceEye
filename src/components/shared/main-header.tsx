@@ -9,6 +9,7 @@ import { GraduationCap } from 'lucide-react';
 
 export function MainHeader() {
     const [dashboardUrl, setDashboardUrl] = React.useState('/');
+    const [lang, setLang] = React.useState('ar');
 
     React.useEffect(() => {
         const userRole = localStorage.getItem('userRole');
@@ -29,7 +30,14 @@ export function MainHeader() {
                 </Link>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
+                <button
+                    onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
+                    className="flex h-9 w-9 items-center justify-center rounded-md border bg-background text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+                    title={lang === 'ar' ? 'Switch to English' : 'التبديل للعربية'}
+                >
+                    {lang === 'ar' ? 'En' : 'ع'}
+                </button>
                 <ThemeToggle />
                 <UserNav />
                 <SidebarTrigger className="hidden md:flex" />
