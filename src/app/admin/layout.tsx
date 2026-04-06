@@ -3,7 +3,7 @@
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger } from '@/components/ui/sidebar';
 import { MainHeader } from '@/components/shared/main-header';
 import Link from 'next/link';
-import { GraduationCap, LayoutDashboard, Users, School, Settings, ClipboardList } from 'lucide-react';
+import { GraduationCap, LayoutDashboard, Users, School, Settings, ClipboardList, ChevronRight } from 'lucide-react';
 import { useTranslation } from '@/components/language-provider';
 
 export default function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
@@ -14,7 +14,9 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
       <div className="flex min-h-screen flex-col">
         <div className="flex flex-1 overflow-hidden">
           <Sidebar side="right" collapsible="icon" className="group rtl:border-l ltr:border-r border-primary/10 shadow-lg shadow-black/5 z-50 relative">
-            <SidebarTrigger className="absolute top-7 -left-3.5 z-50 hidden md:flex h-7 w-7 items-center justify-center rounded-full border border-primary/20 bg-background shadow-md text-primary hover:bg-primary/10 transition-all opacity-0 group-hover:opacity-100" />
+            <SidebarTrigger className="absolute top-1/2 -translate-y-1/2 -left-3.5 z-50 hidden md:flex h-7 w-7 items-center justify-center rounded-full border border-primary/20 bg-background shadow-md hover:bg-primary/10 hover:text-primary transition-all opacity-0 group-hover:opacity-100">
+                <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[collapsible=icon]:group-data-[state=collapsed]:rotate-180" />
+            </SidebarTrigger>
             <SidebarHeader className="border-b border-primary/5 p-6 flex flex-col items-center justify-center gap-3">
                 <div className="bg-gradient-to-br from-primary to-blue-600 p-2.5 rounded-xl shadow-lg shadow-primary/20 group-data-[collapsible=icon]:p-1.5 focus:scale-95 transition-all">
                     <GraduationCap className="h-8 w-8 text-white transition-all transform group-data-[collapsible=icon]:h-5 group-data-[collapsible=icon]:w-5" />

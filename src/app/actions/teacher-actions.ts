@@ -62,6 +62,19 @@ export async function updateClassNote(classId: string, note: string) {
   revalidatePath('/teacher/classes');
 }
 
+export async function deleteClass(classId: string) {
+  await supabaseAdmin.from('attendance_records').delete().eq('class_id', classId);
+  await supabaseAdmin.from('students').delete().eq('class_id', classId);
+  await supabaseAdmin.from('classes').delete().eq('id', classId);
+  revalidatePath('/teacher/classes');
+  revalidatePath('/teacher/dashboard');
+}
+
+export async function updateStudentName(studentId: string, name: string) {
+  await supabaseAdmin.from('students').update({ name }).eq('id', studentId);
+  revalidatePath('/teacher/classes');
+}
+
 type AttendanceData = { studentId: string; classId: string; status: 'present' | 'absent'; };
 
 export async function saveAttendance(records: AttendanceData[]) {

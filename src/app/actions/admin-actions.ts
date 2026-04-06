@@ -109,6 +109,7 @@ export async function getDetailedAttendanceRecords(): Promise<DetailedAttendance
 
 export interface ClassWithStudentCount extends Omit<Class, 'teacherId'> {
   id: string; teacherId: string; studentCount: number; teacherName: string;
+  students: { id: string; name: string; name_en?: string; avatarUrl: string; }[];
 }
 
 export async function getClassesWithStudentCounts(): Promise<ClassWithStudentCount[]> {
@@ -121,16 +122,67 @@ export async function getClassesWithStudentCounts(): Promise<ClassWithStudentCou
 
   const result: ClassWithStudentCount[] = [];
   for (const cls of classes) {
-    const { count } = await supabaseAdmin
-      .from('students').select('*', { count: 'exact', head: true }).eq('class_id', cls.id);
+    const { data: students, count } = await supabaseAdmin
+      .from('students').select('*', { count: 'exact' }).eq('class_id', cls.id).order('name');
+      
     result.push({
       id: cls.id, name: cls.name, name_en: cls.name_en, teacherId: cls.teacher_id || '',
       subject: cls.subject, note: cls.note,
       studentCount: count || 0,
       teacherName: teacherMap.get(cls.teacher_id)?.name || 'غير معين',
+      students: (students || []).map(s => ({
+          id: s.id,
+          name: s.name,
+          name_en: s.name_en,
+          avatarUrl: s.avatar_url || ''
+      }))
     });
   }
   return result;
+}
+
+// -----------------------------------------------------
+// GLOBAL ADMIN CRUD OPERATIONS FOR CLASSES & STUDENTS
+// -----------------------------------------------------
+
+export async function addClassAdmin(name: string, subject: string, teacherId: string) {
+  await supabaseAdmin.from('classes').insert({ name, subject, teacher_id: teacherId });
+  revalidatePath('/admin/classes');
+}
+
+export async function deleteClassAdmin(classId: string) {
+  // Cascading deletes handled by Supabase or we wipe attendance manually first
+  await supabaseAdmin.from('attendance_records').delete().eq('class_id', classId);
+  await supabaseAdmin.from('students').delete().eq('class_id', classId);
+  await supabaseAdmin.from('classes').delete().eq('id', classId);
+  revalidatePath('/admin/classes');
+  revalidatePath('/admin/dashboard');
+}
+
+export async function updateClassAdmin(classId: string, name: string) {
+  await supabaseAdmin.from('classes').update({ name }).eq('id', classId);
+  revalidatePath('/admin/classes');
+}
+
+export async function updateClassNoteAdmin(classId: string, note: string) {
+  await supabaseAdmin.from('classes').update({ note }).eq('id', classId);
+  revalidatePath('/admin/classes');
+}
+
+export async function addStudentAdmin(name: string, classId: string) {
+  await supabaseAdmin.from('students').insert({ name, class_id: classId, avatar_url: '' });
+  revalidatePath('/admin/classes');
+}
+
+export async function updateStudentAdmin(studentId: string, name: string) {
+  await supabaseAdmin.from('students').update({ name }).eq('id', studentId);
+  revalidatePath('/admin/classes');
+}
+
+export async function deleteStudentAdmin(studentId: string) {
+  await supabaseAdmin.from('attendance_records').delete().eq('student_id', studentId);
+  await supabaseAdmin.from('students').delete().eq('id', studentId);
+  revalidatePath('/admin/classes');
 }
 
 export type HierarchyStudent = { id: string; name: string; name_en?: string; avatarUrl: string; };

@@ -29,7 +29,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import type { ClassWithStudents } from '@/app/actions/teacher-actions';
-import { getTeacherClassesAndStudents, addClass, addStudent, deleteStudent, updateClassName, updateClassNote } from '@/app/actions/teacher-actions';
+import { getTeacherClassesAndStudents, addClass, addStudent, deleteStudent, updateClassName, updateClassNote, deleteClass, updateStudentName } from '@/app/actions/teacher-actions';
 
 type StudentInClass = ClassWithStudents['students'][number];
 
@@ -42,7 +42,7 @@ export default function ClassManagement() {
   const [isProcessing, setIsProcessing] = React.useState(false);
 
   const [dialogState, setDialogState] = React.useState<{
-    type: 'addStudent' | 'editClass' | 'editNote' | 'deleteStudent' | null;
+    type: 'addStudent' | 'editClass' | 'editNote' | 'deleteStudent' | 'deleteClass' | 'editStudent' | null;
     classId: string | null;
     studentId?: string;
     studentName?: string;
@@ -123,14 +123,19 @@ export default function ClassManagement() {
     }
     
     try {
-      await addStudent(name, dialogState.classId);
-      const className = classes.find(c => c.id === dialogState.classId)?.name;
-      toast({ title: 'نجاح', description: `تمت إضافة الطالب "${name}" إلى صف ${className}.` });
+      if (dialogState.type === 'editStudent' && dialogState.studentId) {
+          await updateStudentName(dialogState.studentId, name);
+          toast({ title: 'نجاح', description: `تم تعديل اسم الطالب بنجاح.` });
+      } else {
+          await addStudent(name, dialogState.classId);
+          const className = classes.find(c => c.id === dialogState.classId)?.name;
+          toast({ title: 'نجاح', description: `تمت إضافة الطالب "${name}" إلى صف ${className}.` });
+      }
       setDialogState({ type: null, classId: null, isOpen: false });
       form.reset();
       fetchClasses();
     } catch (error) {
-       toast({ variant: 'destructive', title: 'فشل الإضافة', description: 'لم يتمكن من إضافة الطالب.'});
+       toast({ variant: 'destructive', title: 'فشل العملية', description: 'لم يتمكن من تنفيذ الإجراء على الطالب.'});
     } finally {
       setIsProcessing(false);
     }
@@ -187,7 +192,23 @@ export default function ClassManagement() {
     }
   }
 
-  const openDialog = (type: 'addStudent' | 'editClass' | 'editNote' | 'deleteStudent', classId: string, studentId?: string, studentName?: string) => {
+  const handleDeleteClass = async () => {
+    if (dialogState.classId) {
+        setIsProcessing(true);
+        try {
+            await deleteClass(dialogState.classId);
+            toast({ title: 'نجاح', description: `تم حذف الصف وجميع طلابه بنجاح.` });
+            fetchClasses();
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'فشل الحذف', description: 'لم يتمكن من حذف الصف.'});
+        } finally {
+            setIsProcessing(false);
+            setDialogState({ type: null, classId: null, isOpen: false });
+        }
+    }
+  }
+
+  const openDialog = (type: 'addStudent' | 'editClass' | 'editNote' | 'deleteStudent' | 'deleteClass' | 'editStudent', classId: string, studentId?: string, studentName?: string) => {
     setDialogState({ type, classId, studentId, studentName, isOpen: true });
   }
 
@@ -265,6 +286,10 @@ export default function ClassManagement() {
                         <DropdownMenuItem onSelect={() => openDialog('editNote', c.id)}>
                           <FileText className="w-4 h-4 ml-2" /> تعديل الملاحظة
                         </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onSelect={() => openDialog('deleteClass', c.id)} className="text-destructive focus:text-destructive">
+                          <Trash2 className="w-4 h-4 ml-2" /> حذف الصف بالكامل
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -302,6 +327,10 @@ export default function ClassManagement() {
                                     </div>
                                     </TableCell>
                                     <TableCell className="text-end">
+                                    <Button variant="ghost" size="icon" onClick={() => openDialog('editStudent', c.id, student.id, student.name)}>
+                                        <Edit className="h-4 w-4 text-muted-foreground" />
+                                        <span className="sr-only">تعديل</span>
+                                    </Button>
                                     <Button variant="ghost" size="icon" onClick={() => openDialog('deleteStudent', c.id, student.id, student.name)}>
                                         <Trash2 className="h-4 w-4 text-destructive" />
                                         <span className="sr-only">حذف</span>
@@ -414,6 +443,43 @@ export default function ClassManagement() {
                       حذف
                     </Button>
                 </DialogFooter>
+                </>
+            )}
+            {dialogState.type === 'deleteClass' && (
+                <>
+                <DialogHeader>
+                    <DialogTitle className="text-destructive">تأكيد حذف الصف</DialogTitle>
+                     <DialogDescription>
+                        هل أنت متأكد من رغبتك في حذف صف "{findClass(dialogState.classId)?.name}"؟ 
+                        هذا الإجراء سيقوم أيضاً بحذف <span className="font-bold text-destructive">جميع الطلاب وسجلات حضورهم المرتبطة بهذا الصف بشكل نهائي!</span>
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setDialogState(prev => ({...prev, isOpen: false}))}>إلغاء</Button>
+                    <Button variant="destructive" onClick={handleDeleteClass} disabled={isProcessing}>
+                      {isProcessing && <Loader2 className="ms-2 h-4 w-4 animate-spin" />}
+                      نعم، احذف الصف والطلاب
+                    </Button>
+                </DialogFooter>
+                </>
+            )}
+            {dialogState.type === 'editStudent' && (
+                <>
+                <DialogHeader>
+                    <DialogTitle>تعديل اسم الطالب</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleStudentAction}>
+                    <div className="grid gap-4 py-4">
+                        <Label htmlFor="studentName">اسم الطالب الجديد</Label>
+                        <Input id="studentName" name="studentName" defaultValue={dialogState.studentName} placeholder="الاسم الكامل للطالب"/>
+                    </div>
+                    <DialogFooter>
+                        <Button type="submit" disabled={isProcessing}>
+                          {isProcessing && <Loader2 className="ms-2 h-4 w-4 animate-spin" />}
+                          حفظ التعديل
+                        </Button>
+                    </DialogFooter>
+                </form>
                 </>
             )}
         </DialogContent>
