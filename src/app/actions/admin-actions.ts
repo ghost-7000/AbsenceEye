@@ -42,7 +42,7 @@ export async function getMostAbsentStudents(): Promise<AbsentStudent[]> {
 export async function getTeachers(): Promise<Teacher[]> {
   const { data } = await supabaseAdmin.from('teachers').select('*');
   return (data || []).map(t => ({
-    id: t.id, name: t.name, email: t.email, role: 'teacher' as const,
+    id: t.id, name: t.name, name_en: t.name_en, email: t.email, role: 'teacher' as const,
     subject: t.subject || 'غير محدد', avatarUrl: t.avatar_url || '',
   }));
 }
@@ -94,24 +94,21 @@ export async function getDetailedAttendanceRecords(): Promise<DetailedAttendance
   const studentMap = new Map((students || []).map(s => [s.id, s.name]));
   const classMap = new Map((classes || []).map(c => [c.id, { name: c.name, subject: c.subject }]));
 
-  const result: DetailedAttendanceRecord[] = [];
-  for (const r of records) {
+  return records.map(r => {
     const studentName = studentMap.get(r.student_id);
     const classInfo = classMap.get(r.class_id);
-    if (!studentName || !classInfo) continue;
-    result.push({
+    if (!studentName || !classInfo) return null;
+    return {
       id: r.id, studentId: r.student_id, classId: r.class_id, date: r.date,
       status: r.status as 'present' | 'absent',
       timestamp: r.timestamp || new Date(r.date).toISOString(),
-      studentName, className: classInfo.name, subject: classInfo.subject,
-    });
-  }
-  return result;
+      studentName, className: classInfo.name, subject: classInfo.subject || undefined,
+    } as DetailedAttendanceRecord;
+  }).filter((r): r is DetailedAttendanceRecord => r !== null);
 }
 
 export interface ClassWithStudentCount extends Omit<Class, 'teacherId'> {
   id: string; teacherId: string; studentCount: number; teacherName: string;
-  name_en?: string;
 }
 
 export async function getClassesWithStudentCounts(): Promise<ClassWithStudentCount[]> {
@@ -119,8 +116,8 @@ export async function getClassesWithStudentCounts(): Promise<ClassWithStudentCou
   if (!classes || classes.length === 0) return [];
 
   const teacherIds = [...new Set(classes.map(c => c.teacher_id).filter(Boolean))];
-  const { data: teachers } = await supabaseAdmin.from('teachers').select('id, name').in('id', teacherIds);
-  const teacherMap = new Map((teachers || []).map(t => [t.id, t.name]));
+  const { data: teachers } = await supabaseAdmin.from('teachers').select('id, name, name_en').in('id', teacherIds);
+  const teacherMap = new Map((teachers || []).map(t => [t.id, t]));
 
   const result: ClassWithStudentCount[] = [];
   for (const cls of classes) {
@@ -130,51 +127,61 @@ export async function getClassesWithStudentCounts(): Promise<ClassWithStudentCou
       id: cls.id, name: cls.name, name_en: cls.name_en, teacherId: cls.teacher_id || '',
       subject: cls.subject, note: cls.note,
       studentCount: count || 0,
-      teacherName: teacherMap.get(cls.teacher_id) || 'غير معين',
+      teacherName: teacherMap.get(cls.teacher_id)?.name || 'غير معين',
     });
   }
   return result;
 }
 
-export interface ClassWithStudents {
-  id: string; name: string; name_en?: string; subject?: string;
-  students: { id: string; name: string; name_en?: string; avatarUrl: string; }[];
-}
+export type HierarchyStudent = { id: string; name: string; name_en?: string; avatarUrl: string; };
+export type HierarchyClass = { id: string; name: string; name_en?: string; students: HierarchyStudent[] };
+export type HierarchyTeacher = { id: string; name: string; name_en?: string; avatarUrl: string; subject: string; classes: HierarchyClass[] };
 
-export async function getTeacherClassesForAdmin(teacherId: string): Promise<ClassWithStudents[]> {
-  const { data: classes } = await supabaseAdmin.from('classes').select('*').eq('teacher_id', teacherId);
-  if (!classes || classes.length === 0) return [];
+export async function getSchoolHierarchy(): Promise<HierarchyTeacher[]> {
+  // 1. Fetch all teachers, classes, and students
+  const { data: teachersData } = await supabaseAdmin.from('teachers').select('id, name, name_en, avatar_url, subject');
+  const { data: classesData } = await supabaseAdmin.from('classes').select('id, name, name_en, teacher_id');
+  const { data: studentsData } = await supabaseAdmin.from('students').select('id, name, name_en, class_id, avatar_url');
 
-  const result: ClassWithStudents[] = [];
-  for (const cls of classes) {
-    const { data: students } = await supabaseAdmin
-      .from('students').select('*').eq('class_id', cls.id).order('name');
-    result.push({
-      id: cls.id, name: cls.name, name_en: cls.name_en, subject: cls.subject,
-      students: (students || []).map(s => ({ id: s.id, name: s.name, name_en: s.name_en, avatarUrl: s.avatar_url || '' })),
+  if (!teachersData || !classesData || !studentsData) return [];
+
+  // 2. Group students by class
+  const studentsByClass = new Map<string, HierarchyStudent[]>();
+  for (const s of studentsData) {
+    if (!studentsByClass.has(s.class_id)) studentsByClass.set(s.class_id, []);
+    studentsByClass.get(s.class_id)!.push({ id: s.id, name: s.name, name_en: s.name_en, avatarUrl: s.avatar_url || '' });
+  }
+
+  // 3. Group classes by teacher (only classes that have > 0 students)
+  const classesByTeacher = new Map<string, HierarchyClass[]>();
+  for (const c of classesData) {
+    const students = studentsByClass.get(c.id) || [];
+    if (students.length === 0) continue; // Skip empty classes
+
+    if (!classesByTeacher.has(c.teacher_id)) classesByTeacher.set(c.teacher_id, []);
+    classesByTeacher.get(c.teacher_id)!.push({
+      id: c.id,
+      name: c.name,
+      name_en: c.name_en,
+      students
     });
   }
-  return result;
-}
 
-export async function getStudentsByClass(classId: string): Promise<{ id: string; name: string; name_en?: string; avatarUrl: string }[]> {
-  const { data } = await supabaseAdmin.from('students').select('*').eq('class_id', classId).order('name');
-  return (data || []).map(s => ({ id: s.id, name: s.name, name_en: s.name_en, avatarUrl: s.avatar_url || '' }));
-}
-
-export async function getTeachersWithClassCount(): Promise<(Teacher & { classCount: number })[]> {
-  const { data: teachers } = await supabaseAdmin.from('teachers').select('*');
-  if (!teachers || teachers.length === 0) return [];
-
-  const result: (Teacher & { classCount: number })[] = [];
-  for (const t of teachers) {
-    const { count } = await supabaseAdmin
-      .from('classes').select('*', { count: 'exact', head: true }).eq('teacher_id', t.id);
-    result.push({
-      id: t.id, name: t.name, email: t.email, role: 'teacher' as const,
-      subject: t.subject || 'غير محدد', avatarUrl: t.avatar_url || '',
-      classCount: count || 0,
+  // 4. Build teacher result (only teachers that have > 0 classes mapped)
+  const hierarchy: HierarchyTeacher[] = [];
+  for (const t of teachersData) {
+    const classes = classesByTeacher.get(t.id) || [];
+    if (classes.length === 0) continue; // Skip teachers without valid classes
+    
+    hierarchy.push({
+      id: t.id,
+      name: t.name,
+      name_en: t.name_en,
+      avatarUrl: t.avatar_url || '',
+      subject: t.subject || '',
+      classes
     });
   }
-  return result;
+
+  return hierarchy;
 }
