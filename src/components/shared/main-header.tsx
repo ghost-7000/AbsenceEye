@@ -22,12 +22,14 @@ export function MainHeader() {
     }, []);
 
     return (
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-4 border-b bg-card/80 backdrop-blur-md px-4 sm:px-6 shadow-sm">
+        <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-4 border-b border-primary/10 bg-background/60 backdrop-blur-xl px-4 sm:px-6 shadow-sm transition-all">
             <div className="flex items-center gap-2">
                 <SidebarTrigger className="flex md:hidden" />
                  <Link href={dashboardUrl} className="flex items-center gap-2 font-semibold">
-                    <GraduationCap className="h-7 w-7 text-primary" />
-                    <span className="font-headline text-xl tracking-tight hidden sm:inline-block bg-gradient-to-l from-primary to-blue-600 bg-clip-text text-transparent">AbsenceEye</span>
+                    <div className="bg-gradient-to-br from-primary to-blue-600 p-1.5 rounded-lg shadow-md shadow-primary/20">
+                        <GraduationCap className="h-6 w-6 text-white" />
+                    </div>
+                    <span className="font-headline text-xl tracking-tight hidden sm:inline-block bg-gradient-to-l from-primary to-blue-600 bg-clip-text text-transparent drop-shadow-sm">AbsenceEye</span>
                 </Link>
             </div>
 

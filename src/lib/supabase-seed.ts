@@ -52,32 +52,42 @@ async function runSeed() {
   await supabaseAdmin.from('attendance_records').delete().neq('id', '00000000-0000-0000-0000-000000000000');
   await supabaseAdmin.from('students').delete().neq('id', '00000000-0000-0000-0000-000000000000');
   await supabaseAdmin.from('classes').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-  // NOTE: Assuming auth records are separate or created via signup. We only seed the app schema tables.
 
-  // 2. Insert Teachers (Assuming they exist in auth, but we need their IDs or just link by email via app tables? Wait, AbsenceEye stores teachers in auth.
-  // Actually, we usually assign classes to `teacher_id`. Let's create dummy UUIDs for teachers just to link classes if needed.
-  // To be safe, we will create 3 classes and assign dummy teacher logic.
-  let classList: any[] = [];
+  // We do not delete teachers, we assume they are there. But let's fetch them!
+  const { data: existingTeachers } = await supabaseAdmin.from('teachers').select('*');
   
-  console.log("📚 Creating 15 Classes...");
-  const classGradesAr = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس'];
-  const classGradesEn = ['First', 'Second', 'Third', 'Fourth', 'Fifth'];
-  
-  for (let i = 0; i < classGradesAr.length; i++) {
-    for(let j=1; j<=3; j++) {
-       classList.push({ 
-           name: `الصف ${classGradesAr[i]} / ${j}`, 
-           name_en: `Grade ${classGradesEn[i]} / ${j}`,
-           subject: 'عام'
-       });
-    }
+  if (!existingTeachers || existingTeachers.length === 0) {
+      console.log("❌ No teachers found! Please register teachers inside the platform first (From the Dashboard).");
+      return;
   }
+  
+  console.log(`✅ Found ${existingTeachers.length} teachers. Assigning classes...`);
 
+  // 2. Insert Classes for each teacher
+  let classList: any[] = [];
+  const classGradesAr = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس'];
+  const classGradesEn = ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'];
+  
+  existingTeachers.forEach((teacher, idx) => {
+      // Create 3 to 4 classes per teacher
+      const numClasses = 3 + (idx % 2); // alternates 3 and 4
+      for(let j=1; j<=numClasses; j++) {
+           const randGrade = Math.floor(Math.random() * classGradesAr.length);
+           classList.push({ 
+               name: `الصف ${classGradesAr[randGrade]} / ${j}`, 
+               name_en: `Grade ${classGradesEn[randGrade]} / ${j}`,
+               subject: teacher.subject || 'عام',
+               teacher_id: teacher.id
+           });
+      }
+  });
+
+  console.log(`📚 Creating ${classList.length} Classes tied to Teachers...`);
   const { data: classesData, error: classErr } = await supabaseAdmin.from('classes').insert(classList).select();
   if (classErr) { console.error("Error inserting classes:", classErr); return; }
 
   // 3. Create 20 students per class
-  console.log("👩‍🎓 Creating 20 bilingual students per class...");
+  console.log("👩‍🎓 Creating ~20 bilingual students per class...");
   const studentsToInsert = [];
   for (const cls of classesData!) {
       for (let i=0; i<20; i++) {
@@ -95,7 +105,7 @@ async function runSeed() {
   if (stdErr) { console.error("Error inserting students:", stdErr); return; }
 
   // 4. Generate random attendance for the past 7 days
-  console.log("🗓 Generating random attendance records...");
+  console.log("🗓 Generating random attendance records (15% absences)...");
   const attendanceToInsert = [];
   const today = new Date();
   
@@ -105,8 +115,8 @@ async function runSeed() {
       const dateStr = d.toISOString().split('T')[0];
       
       for (const std of stdData!) {
-         // 90% present, 10% absent
-         const isPresent = Math.random() > 0.10;
+         // 85% present, 15% absent
+         const isPresent = Math.random() > 0.15;
          attendanceToInsert.push({
              student_id: std.id,
              class_id: std.class_id,
@@ -117,14 +127,18 @@ async function runSeed() {
       }
   }
 
-  // Insert attendance in chunks to avoid payload too large limit (7 days * 300 students = 2100 records)
+  // Insert attendance in chunks to avoid payload too large limit
   for (let i = 0; i < attendanceToInsert.length; i += 500) {
       const chunk = attendanceToInsert.slice(i, i + 500);
       const { error: attErr } = await supabaseAdmin.from('attendance_records').insert(chunk);
       if (attErr) { console.error("Error inserting attendance chunk:", attErr); return; }
   }
 
-  console.log("✅ Database seeded successfully with 15 classes, 300 students, and attendance records!");
+  console.log(`✅ Database explicitly seeded!`);
+  console.log(`Total Teachers Linked: ${existingTeachers.length}`);
+  console.log(`Total Classes Created: ${classesData.length}`);
+  console.log(`Total Students Created: ${stdData.length}`);
+  console.log(`Total Attendance Records Created: ${attendanceToInsert.length}`);
 }
 
 runSeed().catch(console.error);
