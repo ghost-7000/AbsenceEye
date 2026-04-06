@@ -23,7 +23,7 @@ export function MainHeader() {
     return (
         <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between gap-4 border-b border-primary/10 bg-background/80 backdrop-blur-xl px-4 sm:px-6 shadow-sm transition-all">
             <div className="flex items-center gap-2">
-                {/* Mobile sidebar trigger */}
+                {/* Mobile sidebar trigger ONLY */}
                 <SidebarTrigger className="md:hidden" />
                 
                 {/* Logo visible ONLY on Mobile because PC has it in the Sidebar */}

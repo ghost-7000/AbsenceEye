@@ -1,6 +1,6 @@
 'use client';
 
-import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter } from '@/components/ui/sidebar';
+import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger } from '@/components/ui/sidebar';
 import { MainHeader } from '@/components/shared/main-header';
 import Link from 'next/link';
 import { GraduationCap, LayoutDashboard, Users, School, Settings, ClipboardList } from 'lucide-react';
@@ -13,7 +13,8 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
     <SidebarProvider>
       <div className="flex min-h-screen flex-col">
         <div className="flex flex-1 overflow-hidden">
-          <Sidebar side="right" collapsible="icon" className="rtl:border-l ltr:border-r border-primary/10 shadow-lg shadow-black/5 z-50">
+          <Sidebar side="right" collapsible="icon" className="group rtl:border-l ltr:border-r border-primary/10 shadow-lg shadow-black/5 z-50 relative">
+            <SidebarTrigger className="absolute top-7 -left-3.5 z-50 hidden md:flex h-7 w-7 items-center justify-center rounded-full border border-primary/20 bg-background shadow-md text-primary hover:bg-primary/10 transition-all opacity-0 group-hover:opacity-100" />
             <SidebarHeader className="border-b border-primary/5 p-6 flex flex-col items-center justify-center gap-3">
                 <div className="bg-gradient-to-br from-primary to-blue-600 p-2.5 rounded-xl shadow-lg shadow-primary/20 group-data-[collapsible=icon]:p-1.5 focus:scale-95 transition-all">
                     <GraduationCap className="h-8 w-8 text-white transition-all transform group-data-[collapsible=icon]:h-5 group-data-[collapsible=icon]:w-5" />
