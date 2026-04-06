@@ -32,24 +32,7 @@ export function MainHeader() {
             </div>
 
             <div className="flex items-center gap-2 sm:gap-4">
-                <div className="flex items-center rounded-full border bg-muted/50 p-1 shadow-inner">
-                    <button
-                        onClick={() => setLang('ar')}
-                        className={`rounded-full px-3 py-1 text-xs font-bold transition-all ${
-                            lang === 'ar' ? 'bg-background shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground'
-                        }`}
-                    >
-                        عربي
-                    </button>
-                    <button
-                        onClick={() => setLang('en')}
-                        className={`rounded-full px-3 py-1 text-xs font-bold transition-all ${
-                            lang === 'en' ? 'bg-background shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground'
-                        }`}
-                    >
-                        EN
-                    </button>
-                </div>
+                {/* Language Toggle Removed as requested */}
                 <ThemeToggle />
                 <UserNav />
                 <SidebarTrigger className="hidden md:flex" />
