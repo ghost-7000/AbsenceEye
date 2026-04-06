@@ -1,7 +1,6 @@
 'use server';
 
 import { supabaseAdmin } from '@/lib/supabase';
-import { seedDatabase } from '@/lib/supabase-seed';
 import type { User, Teacher } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
 
@@ -11,7 +10,6 @@ type UnifiedUser = Omit<User & Teacher, never> & { id: string };
 type AuthResult = { success: boolean; message?: string; user?: UnifiedUser; };
 
 export async function authenticate(credentials: AuthInput): Promise<AuthResult> {
-  await seedDatabase();
   try {
     let userRow: any = null;
     if (credentials.role === 'admin') {
