@@ -5,8 +5,6 @@ import { MainHeader } from '@/components/shared/main-header';
 import Link from 'next/link';
 import { GraduationCap, LayoutDashboard, Users, School, Settings, ClipboardList } from 'lucide-react';
 import { useTranslation } from '@/components/language-provider';
-import { UserNav } from '@/components/shared/user-nav';
-import { ThemeToggle } from '@/components/shared/theme-toggle';
 
 export default function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
   const t = useTranslation();
@@ -75,10 +73,6 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
             
             <SidebarFooter className="border-t border-primary/10 p-4 bg-muted/30">
               <SidebarMenu>
-                <SidebarMenuItem className="mb-2 flex justify-between items-center px-4">
-                  <span className="text-xs text-muted-foreground font-medium">المظهر الشكلي</span>
-                  <ThemeToggle />
-                </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip={t.settings} className="hover:bg-primary/10 hover:text-primary transition-colors rounded-lg">
                     <Link href="/admin/settings">
@@ -87,9 +81,6 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-                <div className="mt-4 pt-4 border-t border-border flex justify-center">
-                   <UserNav />
-                </div>
               </SidebarMenu>
             </SidebarFooter>
           </Sidebar>
