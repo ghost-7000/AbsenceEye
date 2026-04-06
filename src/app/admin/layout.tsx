@@ -1,89 +1,102 @@
 'use client';
 
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarFooter,
-} from '@/components/ui/sidebar';
+import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter } from '@/components/ui/sidebar';
 import { MainHeader } from '@/components/shared/main-header';
 import Link from 'next/link';
 import { GraduationCap, LayoutDashboard, Users, School, Settings, ClipboardList } from 'lucide-react';
 import { useTranslation } from '@/components/language-provider';
+import { UserNav } from '@/components/shared/user-nav';
+import { ThemeToggle } from '@/components/shared/theme-toggle';
 
-export default function AdminDashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
   const t = useTranslation();
 
   return (
     <SidebarProvider>
       <div className="flex min-h-screen flex-col">
-        <div className="flex flex-1">
-          <Sidebar side="right" className="rtl:border-l ltr:border-r">
-            <SidebarHeader className="border-b p-4 flex items-center justify-center">
-                <Link href="/admin/dashboard">
-                    <GraduationCap className="h-8 w-8 text-primary group-data-[collapsible=icon]:group-data-[state=collapsed]:h-6 group-data-[collapsible=icon]:group-data-[state=collapsed]:w-6 transition-all" />
-                </Link>
+        <div className="flex flex-1 overflow-hidden">
+          <Sidebar side="right" collapsible="none" className="rtl:border-l ltr:border-r border-primary/10 shadow-lg shadow-black/5 z-50">
+            <SidebarHeader className="border-b border-primary/5 p-6 flex flex-col items-center justify-center gap-3">
+                <div className="bg-gradient-to-br from-primary to-blue-600 p-2.5 rounded-xl shadow-lg shadow-primary/20">
+                    <GraduationCap className="h-8 w-8 text-white transition-all transform hover:scale-110" />
+                </div>
+                <span className="font-headline text-2xl tracking-tight bg-gradient-to-l from-primary to-blue-600 bg-clip-text text-transparent font-bold">AbsenceEye</span>
             </SidebarHeader>
-            <SidebarContent>
-              <SidebarMenu className="p-2">
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip={t.dashboard}>
-                    <Link href="/admin/dashboard">
-                      <LayoutDashboard />
-                      <span>{t.dashboard}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip={t.teachers}>
-                    <Link href="/admin/teachers">
-                      <Users />
-                      <span>{t.teachers}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip={t.classes}>
-                    <Link href="/admin/classes">
-                      <School />
-                      <span>{t.classes}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip={t.attendanceRecords}>
-                    <Link href="/admin/attendance-records">
-                      <ClipboardList />
-                      <span>{t.attendanceRecords}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
+            
+            <SidebarContent className="px-3 py-6 hidden-scrollbar">
+              <div className="mb-6">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-3">الرئيسية</p>
+                <div>
+                  <SidebarMenu className="space-y-1">
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip={t.dashboard} className="hover:bg-primary/10 hover:text-primary transition-colors rounded-lg py-5 px-4 font-medium">
+                        <Link href="/admin/dashboard">
+                          <LayoutDashboard className="h-5 w-5 opacity-80" />
+                          <span className="text-[15px]">{t.dashboard}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </SidebarMenu>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-3">الإدارة الأكاديمية</p>
+                <div>
+                  <SidebarMenu className="space-y-1">
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip={t.teachers} className="hover:bg-primary/10 hover:text-primary transition-colors rounded-lg py-5 px-4 font-medium">
+                        <Link href="/admin/teachers">
+                          <Users className="h-5 w-5 opacity-80" />
+                          <span className="text-[15px]">{t.teachers}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip={t.classes} className="hover:bg-primary/10 hover:text-primary transition-colors rounded-lg py-5 px-4 font-medium">
+                        <Link href="/admin/classes">
+                          <School className="h-5 w-5 opacity-80" />
+                          <span className="text-[15px]">{t.classes}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip={t.attendanceRecords} className="hover:bg-primary/10 hover:text-primary transition-colors rounded-lg py-5 px-4 font-medium">
+                        <Link href="/admin/attendance-records">
+                          <ClipboardList className="h-5 w-5 opacity-80" />
+                          <span className="text-[15px]">{t.attendanceRecords}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </SidebarMenu>
+                </div>
+              </div>
             </SidebarContent>
-            <SidebarFooter className="border-t p-2">
+            
+            <SidebarFooter className="border-t border-primary/10 p-4 bg-muted/30">
               <SidebarMenu>
+                <SidebarMenuItem className="mb-2 flex justify-between items-center px-4">
+                  <span className="text-xs text-muted-foreground font-medium">المظهر الشكلي</span>
+                  <ThemeToggle />
+                </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip={t.settings} href="/admin/settings">
+                  <SidebarMenuButton asChild tooltip={t.settings} className="hover:bg-primary/10 hover:text-primary transition-colors rounded-lg">
                     <Link href="/admin/settings">
-                      <Settings />
-                      <span>{t.settings}</span>
+                      <Settings className="h-5 w-5 opacity-80" />
+                      <span className="text-sm font-medium">{t.settings}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
+                <div className="mt-4 pt-4 border-t border-border flex justify-center">
+                   <UserNav />
+                </div>
               </SidebarMenu>
             </SidebarFooter>
           </Sidebar>
-          <div className="flex flex-1 flex-col">
+          
+          <div className="flex flex-1 flex-col w-full min-w-0">
             <MainHeader />
-            <main className="flex-1 p-4 sm:p-6 bg-secondary/50">{children}</main>
+            <main className="flex-1 p-4 sm:p-8 md:p-10 bg-secondary/30 overflow-y-auto">{children}</main>
           </div>
         </div>
       </div>
