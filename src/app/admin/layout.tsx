@@ -25,9 +25,9 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
               <div className="mb-6">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-3 group-data-[collapsible=icon]:hidden">الرئيسية</p>
                 <div>
-                  <SidebarMenu className="space-y-1">
+                  <SidebarMenu className="space-y-1.5">
                     <SidebarMenuItem>
-                      <SidebarMenuButton asChild tooltip={t.dashboard} className="hover:bg-primary/10 hover:text-primary transition-colors rounded-lg py-5 px-4 font-medium group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
+                      <SidebarMenuButton asChild tooltip={t.dashboard} className="hover:bg-primary/10 hover:text-primary transition-colors rounded-lg py-2.5 px-3 font-medium group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
                         <Link href="/admin/dashboard">
                           <LayoutDashboard className="h-5 w-5 opacity-80" />
                           <span className="text-[15px] group-data-[collapsible=icon]:hidden">{t.dashboard}</span>
@@ -41,9 +41,9 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
               <div className="mt-6">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-3 group-data-[collapsible=icon]:hidden">الإدارة الأكاديمية</p>
                 <div>
-                  <SidebarMenu className="space-y-1">
+                  <SidebarMenu className="space-y-1.5">
                     <SidebarMenuItem>
-                      <SidebarMenuButton asChild tooltip={t.teachers} className="hover:bg-primary/10 hover:text-primary transition-colors rounded-lg py-5 px-4 font-medium group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
+                      <SidebarMenuButton asChild tooltip={t.teachers} className="hover:bg-primary/10 hover:text-primary transition-colors rounded-lg py-2.5 px-3 font-medium group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
                         <Link href="/admin/teachers">
                           <Users className="h-5 w-5 opacity-80" />
                           <span className="text-[15px] group-data-[collapsible=icon]:hidden">{t.teachers}</span>
@@ -51,7 +51,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
-                      <SidebarMenuButton asChild tooltip={t.classes} className="hover:bg-primary/10 hover:text-primary transition-colors rounded-lg py-5 px-4 font-medium group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
+                      <SidebarMenuButton asChild tooltip={t.classes} className="hover:bg-primary/10 hover:text-primary transition-colors rounded-lg py-2.5 px-3 font-medium group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
                         <Link href="/admin/classes">
                           <School className="h-5 w-5 opacity-80" />
                           <span className="text-[15px] group-data-[collapsible=icon]:hidden">{t.classes}</span>
@@ -59,7 +59,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
-                      <SidebarMenuButton asChild tooltip={t.attendanceRecords} className="hover:bg-primary/10 hover:text-primary transition-colors rounded-lg py-5 px-4 font-medium group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
+                      <SidebarMenuButton asChild tooltip={t.attendanceRecords} className="hover:bg-primary/10 hover:text-primary transition-colors rounded-lg py-2 px-3 font-medium group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
                         <Link href="/admin/attendance-records">
                           <ClipboardList className="h-5 w-5 opacity-80" />
                           <span className="text-[15px] group-data-[collapsible=icon]:hidden">{t.attendanceRecords}</span>
@@ -74,7 +74,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
             <SidebarFooter className="border-t border-primary/10 p-4 bg-muted/30">
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip={t.settings} className="hover:bg-primary/10 hover:text-primary transition-colors rounded-lg group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
+                  <SidebarMenuButton asChild tooltip={t.settings} className="hover:bg-primary/10 hover:text-primary py-2 transition-colors rounded-lg group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
                     <Link href="/admin/settings">
                       <Settings className="h-5 w-5 opacity-80" />
                       <span className="text-sm font-medium group-data-[collapsible=icon]:hidden">{t.settings}</span>
