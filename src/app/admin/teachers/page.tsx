@@ -16,7 +16,7 @@ export default async function AdminTeachersPage() {
             <CardHeader>
                 <CardTitle>إدارة المعلمات</CardTitle>
                 <CardDescription>
-                إضافة وتعديل وحذف حسابات المعلمات في النظام.
+                    انقر على اسم أي معلمة لعرض صفوفها وطلابها.
                 </CardDescription>
             </CardHeader>
             <CardContent>

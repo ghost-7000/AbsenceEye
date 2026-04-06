@@ -30,11 +30,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import type { ClassWithStudents } from '@/app/actions/teacher-actions';
 import { getTeacherClassesAndStudents, addClass, addStudent, deleteStudent, updateClassName, updateClassNote } from '@/app/actions/teacher-actions';
+import { useTranslation, useLanguage } from '@/components/language-provider';
 
 type StudentInClass = ClassWithStudents['students'][number];
 
 export default function ClassManagement() {
   const { toast } = useToast();
+  const t = useTranslation();
+  const { lang } = useLanguage();
   const [classes, setClasses] = React.useState<ClassWithStudents[]>([]);
   const [loading, setLoading] = React.useState(true);
   
@@ -63,8 +66,8 @@ export default function ClassManagement() {
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: 'خطأ في جلب البيانات',
-        description: 'فشل تحميل بيانات الصفوف من قاعدة البيانات.',
+        title: t.addTeacherFail,
+        description: t.addTeacherFailDesc,
       });
     } finally {
       setLoading(false);
@@ -208,8 +211,8 @@ export default function ClassManagement() {
     <>
       <div className="flex items-center justify-between mb-6">
         <div>
-            <h1 className="text-2xl font-bold md:text-3xl">صفوفي</h1>
-            <p className="text-muted-foreground">عرض وتعديل الطلاب في صفوفك.</p>
+            <h1 className="text-2xl font-bold md:text-3xl">{t.myClasses}</h1>
+            <p className="text-muted-foreground">{t.manageStudents}</p>
         </div>
         <Dialog open={isAddClassOpen} onOpenChange={setAddClassOpen}>
             <DialogTrigger asChild>
@@ -251,7 +254,7 @@ export default function ClassManagement() {
               <Card key={c.id} className="flex flex-col">
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{c.name}</CardTitle>
+                    <CardTitle className="text-lg">{lang === 'en' && c.name_en ? c.name_en : c.name}</CardTitle>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -269,7 +272,7 @@ export default function ClassManagement() {
                     </DropdownMenu>
                   </div>
                   <CardDescription className="flex items-center gap-2">
-                    <Badge variant="secondary">{c.students.length} طالب</Badge>
+                    <Badge variant="secondary">{c.students.length} {t.student}</Badge>
                     {c.subject && <Badge variant="outline">{c.subject}</Badge>}
                   </CardDescription>
                 </CardHeader>
@@ -284,8 +287,8 @@ export default function ClassManagement() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>الطالب</TableHead>
-                        <TableHead className="text-end">حذف</TableHead>
+                        <TableHead>{t.student}</TableHead>
+                        <TableHead className="text-end">{t.delete}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -294,11 +297,11 @@ export default function ClassManagement() {
                                 <TableRow key={student.id}>
                                     <TableCell>
                                     <div className="flex items-center gap-3">
-                                        <Avatar className="h-9 w-9">
+                                        <Avatar className="h-8 w-8">
                                         <AvatarImage src={student.avatarUrl || undefined} alt={student.name} />
-                                        <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
+                                        <AvatarFallback className="text-xs">{(lang === 'en' && student.name_en ? student.name_en : student.name).charAt(0)}</AvatarFallback>
                                         </Avatar>
-                                        <div className="font-medium">{student.name}</div>
+                                        <div className="font-medium text-sm">{lang === 'en' && student.name_en ? student.name_en : student.name}</div>
                                     </div>
                                     </TableCell>
                                     <TableCell className="text-end">
@@ -311,8 +314,8 @@ export default function ClassManagement() {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={2} className="h-24 text-center">
-                                    لا يوجد طلاب في هذا الصف.
+                                <TableCell colSpan={2} className="h-24 text-center text-muted-foreground text-sm">
+                                    {t.noData}
                                 </TableCell>
                             </TableRow>
                         )}
@@ -322,8 +325,8 @@ export default function ClassManagement() {
                 </CardContent>
                 <CardFooter>
                     <Button variant="outline" className="w-full" onClick={() => openDialog('addStudent', c.id)}>
-                        <UserPlus className="h-4 w-4 ml-2" />
-                        إضافة طالب جديد
+                        <UserPlus className="h-4 w-4 me-2" />
+                        {t.addStudent}
                     </Button>
                 </CardFooter>
               </Card>
@@ -332,9 +335,9 @@ export default function ClassManagement() {
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center rounded-md border border-dashed p-12 text-center mt-6">
-            <h3 className="text-lg font-medium">لا توجد صفوف دراسية</h3>
+            <h3 className="text-lg font-medium">{t.noClasses}</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-                ابدأ بإنشاء صف جديد لإضافة الطلاب وإدارة الحضور.
+                {t.noClassesDesc}
             </p>
         </div>
       )}

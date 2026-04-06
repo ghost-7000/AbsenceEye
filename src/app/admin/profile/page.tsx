@@ -28,6 +28,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getUser, updateUser, updatePassword } from '@/app/actions/auth-actions';
 import type { User, Teacher } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslation } from '@/components/language-provider';
 
 type UnifiedUser = User | Teacher;
 
@@ -46,6 +47,7 @@ const passwordSchema = z.object({
 
 export default function AdminProfilePage() {
   const { toast } = useToast();
+  const t = useTranslation();
   const [loading, setLoading] = React.useState(true);
   const [isSaving, setIsSaving] = React.useState(false);
   const [isSavingPassword, setIsSavingPassword] = React.useState(false);
@@ -118,15 +120,15 @@ export default function AdminProfilePage() {
       window.dispatchEvent(new Event("storage"));
       
       toast({
-        title: 'تم تحديث الملف الشخصي',
-        description: 'تم حفظ معلوماتك الجديدة بنجاح.',
+        title: t.teacherUpdated,
+        description: t.teacherUpdatedDesc,
       });
       setAvatarPreview(null);
     } catch (error) {
        toast({
         variant: 'destructive',
-        title: 'خطأ',
-        description: 'فشل تحديث الملف الشخصي.',
+        title: t.editTeacherFail,
+        description: t.editTeacherFailDesc,
       });
     } finally {
       setIsSaving(false);
@@ -191,10 +193,8 @@ export default function AdminProfilePage() {
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>الملف الشخصي</CardTitle>
-          <CardDescription>
-            عرض وتعديل معلومات ملفك الشخصي.
-          </CardDescription>
+        <CardTitle>{t.profile}</CardTitle>
+          <CardDescription>{t.profileInfoDesc}</CardDescription>
         </CardHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -227,9 +227,9 @@ export default function AdminProfilePage() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>الاسم</FormLabel>
+                    <FormLabel>{t.name}</FormLabel>
                     <FormControl>
-                      <Input placeholder="اسمك الكامل" {...field} />
+                      <Input placeholder={t.fullName} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -240,7 +240,7 @@ export default function AdminProfilePage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>البريد الإلكتروني</FormLabel>
+                    <FormLabel>{t.email}</FormLabel>
                     <FormControl>
                       <Input type="email" placeholder="name@example.com" {...field} />
                     </FormControl>
@@ -252,7 +252,7 @@ export default function AdminProfilePage() {
             <CardFooter className="border-t px-6 py-4">
               <Button type="submit" disabled={isSaving}>
                 {isSaving && <Loader2 className="ms-2 h-4 w-4 animate-spin" />}
-                حفظ التغييرات
+                {t.save}
               </Button>
             </CardFooter>
           </form>

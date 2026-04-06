@@ -5,21 +5,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Sun, Moon, SunMoon } from 'lucide-react';
+import { useTranslation } from '@/components/language-provider';
 
 export default function AdminSettingsPage() {
   const { theme, setTheme } = useTheme();
+  const t = useTranslation();
 
   return (
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>الإعدادات</CardTitle>
-          <CardDescription>إدارة إعدادات النظام والتفضيلات.</CardDescription>
+          <CardTitle>{t.settingsTitle}</CardTitle>
+          <CardDescription>{t.settingsDesc}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            <div className="space-y-2">
-              <Label>مظهر التطبيق</Label>
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">{t.appTheme}</Label>
               <RadioGroup
                 value={theme}
                 onValueChange={setTheme}
@@ -29,30 +31,30 @@ export default function AdminSettingsPage() {
                   <RadioGroupItem value="light" id="light" className="peer sr-only" />
                   <Label
                     htmlFor="light"
-                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer transition-all"
                   >
                     <Sun className="mb-2 h-6 w-6" />
-                    فاتح
+                    {t.light}
                   </Label>
                 </div>
                 <div>
                   <RadioGroupItem value="dark" id="dark" className="peer sr-only" />
                   <Label
                     htmlFor="dark"
-                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer transition-all"
                   >
                     <Moon className="mb-2 h-6 w-6" />
-                    داكن
+                    {t.dark}
                   </Label>
                 </div>
                 <div>
                   <RadioGroupItem value="system" id="system" className="peer sr-only" />
                   <Label
                     htmlFor="system"
-                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer transition-all"
                   >
                     <SunMoon className="mb-2 h-6 w-6" />
-                    النظام
+                    {t.system}
                   </Label>
                 </div>
               </RadioGroup>

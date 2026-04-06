@@ -31,6 +31,7 @@ import { format, parseISO } from 'date-fns';
 import { Label } from '@/components/ui/label';
 import type { ClassWithStudents } from '@/app/actions/teacher-actions';
 import { Calendar } from '@/components/ui/calendar';
+import { useTranslation, useLanguage } from '@/components/language-provider';
 
 export default function TeacherRecordsTable() {
   const [allRecords, setAllRecords] = React.useState<DetailedAttendanceRecord[]>([]);
@@ -39,6 +40,8 @@ export default function TeacherRecordsTable() {
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
   const [loading, setLoading] = React.useState(true);
   const [loadingRecords, setLoadingRecords] = React.useState(false);
+  const t = useTranslation();
+  const { lang } = useLanguage();
   
   const availableDates = React.useMemo(() => {
     if (!selectedClassId) return [];
@@ -106,29 +109,31 @@ export default function TeacherRecordsTable() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>سجلاتي</CardTitle>
-        <CardDescription>اختر صفًا ثم يومًا من التقويم لعرض سجلات الحضور والغياب.</CardDescription>
+        <CardTitle>{t.myRecords}</CardTitle>
+        <CardDescription>
+          {lang === 'ar' ? 'اختر صفًا ثم يومًا من التقويم لعرض سجلات الحضور والغياب.' : 'Select a class then a day from the calendar to view attendance records.'}
+        </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-6">
         <div className="grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-1 flex flex-col gap-4">
                  <div>
-                    <Label htmlFor="class-select">1. اختر الصف</Label>
+                    <Label htmlFor="class-select">{lang === 'ar' ? '1. اختر الصف' : '1. Select Class'}</Label>
                      <Select value={selectedClassId} onValueChange={handleClassChange} disabled={teacherClasses.length === 0}>
                         <SelectTrigger id="class-select" className="w-full mt-2">
-                          <SelectValue placeholder="اختر صفًا" />
+                          <SelectValue placeholder={t.classes} />
                         </SelectTrigger>
                         <SelectContent>
                           {teacherClasses.map(c => (
                             <SelectItem key={c.id} value={c.id}>
-                              {c.name}
+                              {lang === 'en' && c.name_en ? c.name_en : c.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
                     </Select>
                 </div>
                  <div>
-                    <Label>2. اختر اليوم</Label>
+                    <Label>{lang === 'ar' ? '2. اختر اليوم' : '2. Select Day'}</Label>
                     <div className="mt-2 rounded-md border flex justify-center">
                         <Calendar
                             mode="single"
@@ -145,7 +150,7 @@ export default function TeacherRecordsTable() {
                         />
                     </div>
                     <p className="text-xs text-muted-foreground mt-2">
-                        الأيام المتاحة (التي تم تسجيل الحضور فيها) محددة بإطار.
+                        {lang === 'ar' ? 'الأيام المتاحة محددة بإطار.' : 'Days with recorded attendance are highlighted.'}
                     </p>
                  </div>
             </div>
@@ -160,19 +165,19 @@ export default function TeacherRecordsTable() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>الطالب</TableHead>
-                        {selectedClassSubject && <TableHead>المادة</TableHead>}
-                        <TableHead className="text-center">الحالة</TableHead>
+                        <TableHead>{t.student}</TableHead>
+                        {selectedClassSubject && <TableHead>{t.subject}</TableHead>}
+                        <TableHead className="text-center">{t.status}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredRecords.map(record => (
                         <TableRow key={record.id}>
                           <TableCell className="font-medium">{record.studentName}</TableCell>
-                           {selectedClassSubject && <TableCell><Badge variant="outline">{record.subject || 'غير محدد'}</Badge></TableCell>}
+                           {selectedClassSubject && <TableCell><Badge variant="outline">{record.subject || t.notSpecified}</Badge></TableCell>}
                           <TableCell className="text-center">
                             <Badge variant={record.status === 'present' ? 'secondary' : 'destructive'}>
-                              {record.status === 'present' ? 'حاضر' : 'غائب'}
+                              {record.status === 'present' ? t.present : t.absent}
                             </Badge>
                           </TableCell>
                         </TableRow>
@@ -182,17 +187,15 @@ export default function TeacherRecordsTable() {
                 </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center rounded-md border border-dashed p-12 text-center h-full">
-                        <h3 className="text-lg font-medium">لا توجد سجلات</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">
-                            لم يتم العثور على سجلات حضور لهذا الصف في اليوم المحدد.
-                        </p>
+                        <h3 className="text-lg font-medium">{t.noRecordsFound}</h3>
+                        <p className="mt-2 text-sm text-muted-foreground">{t.noRecordsYet}</p>
                     </div>
-                )
+                 )
               ) : (
                 <div className="flex flex-col items-center justify-center rounded-md border border-dashed p-12 text-center h-full">
-                    <h3 className="text-lg font-medium">الرجاء اختيار صف ويوم</h3>
+                    <h3 className="text-lg font-medium">{lang === 'ar' ? 'الرجاء اختيار صف ويوم' : 'Select a Class and Day'}</h3>
                     <p className="mt-2 text-sm text-muted-foreground">
-                       اختر صفًا ويومًا من القائمة والتقويم على اليسار لعرض السجلات.
+                       {lang === 'ar' ? 'اختر صفًا ويومًا من القائمة والتقويم لعرض السجلات.' : 'Select a class and day from the list and calendar to view records.'}
                     </p>
                 </div>
               )}

@@ -94,21 +94,24 @@ export async function getDetailedAttendanceRecords(): Promise<DetailedAttendance
   const studentMap = new Map((students || []).map(s => [s.id, s.name]));
   const classMap = new Map((classes || []).map(c => [c.id, { name: c.name, subject: c.subject }]));
 
-  return records.map(r => {
+  const result: DetailedAttendanceRecord[] = [];
+  for (const r of records) {
     const studentName = studentMap.get(r.student_id);
     const classInfo = classMap.get(r.class_id);
-    if (!studentName || !classInfo) return null;
-    return {
+    if (!studentName || !classInfo) continue;
+    result.push({
       id: r.id, studentId: r.student_id, classId: r.class_id, date: r.date,
       status: r.status as 'present' | 'absent',
       timestamp: r.timestamp || new Date(r.date).toISOString(),
       studentName, className: classInfo.name, subject: classInfo.subject,
-    };
-  }).filter((r): r is DetailedAttendanceRecord => r !== null);
+    });
+  }
+  return result;
 }
 
 export interface ClassWithStudentCount extends Omit<Class, 'teacherId'> {
   id: string; teacherId: string; studentCount: number; teacherName: string;
+  name_en?: string;
 }
 
 export async function getClassesWithStudentCounts(): Promise<ClassWithStudentCount[]> {
@@ -124,10 +127,53 @@ export async function getClassesWithStudentCounts(): Promise<ClassWithStudentCou
     const { count } = await supabaseAdmin
       .from('students').select('*', { count: 'exact', head: true }).eq('class_id', cls.id);
     result.push({
-      id: cls.id, name: cls.name, teacherId: cls.teacher_id || '',
+      id: cls.id, name: cls.name, name_en: cls.name_en, teacherId: cls.teacher_id || '',
       subject: cls.subject, note: cls.note,
       studentCount: count || 0,
       teacherName: teacherMap.get(cls.teacher_id) || 'غير معين',
+    });
+  }
+  return result;
+}
+
+export interface ClassWithStudents {
+  id: string; name: string; name_en?: string; subject?: string;
+  students: { id: string; name: string; name_en?: string; avatarUrl: string; }[];
+}
+
+export async function getTeacherClassesForAdmin(teacherId: string): Promise<ClassWithStudents[]> {
+  const { data: classes } = await supabaseAdmin.from('classes').select('*').eq('teacher_id', teacherId);
+  if (!classes || classes.length === 0) return [];
+
+  const result: ClassWithStudents[] = [];
+  for (const cls of classes) {
+    const { data: students } = await supabaseAdmin
+      .from('students').select('*').eq('class_id', cls.id).order('name');
+    result.push({
+      id: cls.id, name: cls.name, name_en: cls.name_en, subject: cls.subject,
+      students: (students || []).map(s => ({ id: s.id, name: s.name, name_en: s.name_en, avatarUrl: s.avatar_url || '' })),
+    });
+  }
+  return result;
+}
+
+export async function getStudentsByClass(classId: string): Promise<{ id: string; name: string; name_en?: string; avatarUrl: string }[]> {
+  const { data } = await supabaseAdmin.from('students').select('*').eq('class_id', classId).order('name');
+  return (data || []).map(s => ({ id: s.id, name: s.name, name_en: s.name_en, avatarUrl: s.avatar_url || '' }));
+}
+
+export async function getTeachersWithClassCount(): Promise<(Teacher & { classCount: number })[]> {
+  const { data: teachers } = await supabaseAdmin.from('teachers').select('*');
+  if (!teachers || teachers.length === 0) return [];
+
+  const result: (Teacher & { classCount: number })[] = [];
+  for (const t of teachers) {
+    const { count } = await supabaseAdmin
+      .from('classes').select('*', { count: 'exact', head: true }).eq('teacher_id', t.id);
+    result.push({
+      id: t.id, name: t.name, email: t.email, role: 'teacher' as const,
+      subject: t.subject || 'غير محدد', avatarUrl: t.avatar_url || '',
+      classCount: count || 0,
     });
   }
   return result;
